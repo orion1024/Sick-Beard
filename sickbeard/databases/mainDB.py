@@ -25,7 +25,7 @@ from sickbeard.providers.generic import GenericProvider
 from sickbeard import encodingKludge as ek
 from sickbeard.name_parser.parser import NameParser, InvalidNameException
 
-MAX_DB_VERSION = 16
+MAX_DB_VERSION = 17
 
 
 class MainSanityCheck(db.DBSanityCheck):
@@ -97,7 +97,7 @@ class InitialSchema (db.SchemaUpgrade):
 
     def execute(self):
         queries = [
-            "CREATE TABLE tv_shows (show_id INTEGER PRIMARY KEY, location TEXT, show_name TEXT, tvdb_id NUMERIC, network TEXT, genre TEXT, runtime NUMERIC, quality NUMERIC, airs TEXT, status TEXT, seasonfolders NUMERIC, paused NUMERIC, startyear NUMERIC, frenchsearch NUMERIC);",
+            "CREATE TABLE tv_shows (show_id INTEGER PRIMARY KEY, location TEXT, show_name TEXT, tvdb_id NUMERIC, network TEXT, genre TEXT, runtime NUMERIC, quality NUMERIC, airs TEXT, status TEXT, seasonfolders NUMERIC, paused NUMERIC, startyear NUMERIC);",
             "CREATE TABLE tv_episodes (episode_id INTEGER PRIMARY KEY, showid NUMERIC, tvdbid NUMERIC, name TEXT, season NUMERIC, episode NUMERIC, description TEXT, airdate NUMERIC, hasnfo NUMERIC, hastbn NUMERIC, status NUMERIC, location TEXT);",
             "CREATE TABLE info (last_backlog NUMERIC, last_tvdb NUMERIC);",
             "CREATE TABLE history (action NUMERIC, date NUMERIC, showid NUMERIC, season NUMERIC, episode NUMERIC, quality NUMERIC, resource TEXT, provider NUMERIC);",
@@ -358,14 +358,7 @@ class AddLang (FixSabHostURL):
     def execute(self):
         self.addColumn("tv_shows", "lang", "TEXT", "fr")
         
-class AddFrenchSearch (AddLang):
-    def test(self):
-        return self.hasColumn("tv_shows", "frenchsearch")
-
-    def execute(self):
-        self.addColumn("tv_shows", "frenchsearch", "NUMERIC", 0)
-
-class AddCustomSearchNames (AddFrenchSearch):
+class AddCustomSearchNames (AddLang):
     def test(self):
         return self.hasColumn("tv_shows", "custom_search_names")
 
@@ -741,4 +734,14 @@ class AddProcessedFilesTable(AddIMDbInfo):
     def execute(self):
         if self.hasTable("processed_files") != True:
             self.connection.action("CREATE TABLE processed_files (episode_id INTEGER, filename TEXT, md5 TEXT)")
-        self.incDBVersion()   
+        self.incDBVersion()
+
+class AddFrenchSearch (AddProcessedFilesTable):
+    def test(self):
+        return self.checkDBVersion() >= 17
+
+    def execute(self):
+        if self.hasColumn("tv_shows", "frenchsearch") != True:
+            self.addColumn("tv_shows", "frenchsearch", "NUMERIC", 0)
+        self.incDBVersion()
+   
