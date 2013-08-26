@@ -328,7 +328,12 @@ function setLayout(imdb,name){
 #if int($curShow.paused) == 0 and $curShow.status != "Ended":
 	#set $active = "<img src='" + $sbRoot + "/images/yes16.png' alt='Y' width='16' height='16' />"
 #end if
-
+#if int($curShow.paused) == 1 and $curShow.status != "Ended":
+	#set $active = "<img src='" + $sbRoot + "/images/paused16.png' alt='Paused' width='16' height='16' />"
+#end if
+#if int($curShow.paused) == 1 and $curShow.status == "Ended":
+	#set $active = "<img src='" + $sbRoot + "/images/pausedno16.png' alt='Paused' width='16' height='16' />"
+#end if
 	{
 		nextep : "$airdate",
 		imdb : $curShow.tvdbid,
@@ -344,14 +349,13 @@ function setLayout(imdb,name){
 		fr : "$nomfr",
 		subfr : "$nomSub",
 		downloads : setPbDl($nom,$nomSna,$den), 
-		frenchep : setPbFr($nomfr,$nomSub,$denfr), 
-		active : "$active",
+		frenchep : setPbFr($nomfr,$nomSub,$denfr),
 		#if int($curShow.frenchsearch) == 1
 		audio : "<img src=\"$sbRoot/images/flags/${curShow.audio_lang}.png\" alt=\"$curShow.audio_lang\" width=\"16\" /> <img src=\"$sbRoot/images/flags/fr.png\" alt=\"fr\" width=\"16\" />", 
 		#else
 		audio : "<img src=\"$sbRoot/images/flags/${curShow.audio_lang}.png\" alt=\"$curShow.audio_lang\" width=\"16\" />",
 		#end if
-		status : "$curShow.status"  		
+		status : "$active"  		
 	},
 #end for
 
@@ -379,7 +383,6 @@ function setLayout(imdb,name){
 								'Quality', 
 								'Downloads',
 								'French Ep',
-								'Active',
 								'Audio',
 								'Status'], 
 							colModel:
@@ -420,7 +423,6 @@ function setLayout(imdb,name){
 										return createFRBar(rowObject.imdb,rowObject.fr,rowObject.subfr,rowObject.download);
 									}
 								}, 
-								{name:'active',index:'active',width:95, align:"right",align:"center",search:false}, 
 								{name:'audio',index:'audio',width:95,  sortable:true,align:"center",search:false},
 								{name:'status',index:'status',width:115, sortable:true,align:"center",search:false} ],
 							autowidth: true,
