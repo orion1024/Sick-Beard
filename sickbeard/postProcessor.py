@@ -958,7 +958,7 @@ class PostProcessor(object):
             
             path,file=os.path.split(self.file_path)
             
-            if sickbeard.TORRENT_DOWNLOAD_DIR in path:
+            if sickbeard.TORRENT_DOWNLOAD_DIR in path and sickbeard.TORRENT_DOWNLOAD_DIR != "":
                 #Action possible pour les torrent
                 if sickbeard.PROCESS_METHOD == "copy":
                     self._copy(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES)
