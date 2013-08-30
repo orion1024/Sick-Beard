@@ -145,7 +145,7 @@ class BinNewzProvider(generic.NZBProvider):
             soup = BeautifulSoup(urllib2.urlopen("http://www.binnews.in/_bin/search2.php",
                                                  urllib.urlencode(data, True)))
         except Exception, e:
-            logger.log(u"Error trying to load BinNewz response: " + ex(e), logger.ERROR)
+            logger.log(u"Error trying to load BinNewz response: " + e, logger.ERROR)
             return []
 
         results = []
