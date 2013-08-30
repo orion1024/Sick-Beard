@@ -212,7 +212,7 @@ class PostProcessor(object):
         for dummy_file_path in dum_files:
             if os.path.isdir(dummy_file_path):
                 self._list_dummy_files(dummy_file_path, base_name,"d")
-            elif dummy_file_path==self.file_path or dummy_file_path[len(dummy_file_path)-3:] in common.mediaExtensions or sickbeard.MOVE_ASSOCIATED_FILES or (sickbeard.TORRENT_DOWNLOAD_DIR in cur_dir and sickbeard.PROCESS_METHOD in ['copy','hardlink','symlink']):
+            elif dummy_file_path==self.file_path or dummy_file_path[len(dummy_file_path)-3:] in common.mediaExtensions or sickbeard.MOVE_ASSOCIATED_FILES or (sickbeard.TORRENT_DOWNLOAD_DIR != "" and sickbeard.TORRENT_DOWNLOAD_DIR in cur_dir and sickbeard.PROCESS_METHOD in ['copy','hardlink','symlink']):
                 continue
             else:
                 dumb_files_list.append(dummy_file_path)
