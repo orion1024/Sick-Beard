@@ -75,11 +75,11 @@ class SynologyMetadata(generic.GenericMetadata):
         self.name = 'Synology'
 
         self.eg_show_metadata = "series.xml"
-        self.eg_episode_metadata = "Season##\\<i>filename</i>.xml"
+        self.eg_episode_metadata = "Saison##\\<i>filename</i>.xml"
         self.eg_fanart = "backdrop.jpg"
         self.eg_poster = "folder.jpg"
-        self.eg_episode_thumbnails = "Season##\\<i>filename</i>.jpg"
-        self.eg_season_thumbnails = "Season##\\folder.jpg"
+        self.eg_episode_thumbnails = "Saison##\\<i>filename</i>.jpg"
+        self.eg_season_thumbnails = "Saison##\\folder.jpg"
     
     def get_episode_file_path(self, ep_obj):
         """
@@ -125,7 +125,7 @@ class SynologyMetadata(generic.GenericMetadata):
         
         dir_list = [x for x in ek.ek(os.listdir, show_obj.location) if ek.ek(os.path.isdir, ek.ek(os.path.join, show_obj.location, x))]
         
-        season_dir_regex = '^Season\s+(\d+)$'
+        season_dir_regex = '^Saison\s+(\d+)$'
         
         season_dir = None
         
