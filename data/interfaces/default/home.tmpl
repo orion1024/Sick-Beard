@@ -408,7 +408,7 @@ function setLayout(imdb,name){
 								}, 
 								{name:'name',index:'name',width:300,hidden:true,align:"center",searchoptions:{sopt:['cn']},
 									formatter:function (cellvalue, options,rowObject){
-										return "<a class=\"tvShow\" href=\"/home/displayShow?show=" + rowObject.imdb + "\">" + rowObject.name + "</a>"
+										return "<a class=\"tvShow\" href=\"displayShow?show=" + rowObject.imdb + "\">" + rowObject.name + "</a>"
 									}
 								},
 								{name:'network',index:'network', align:"center",sorttype:"text",stype:"text",search:false}, 
