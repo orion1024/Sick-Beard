@@ -1,4 +1,4 @@
-# Author: Nic Wolfe <nic@wolfeden.ca>
+# Author: Ludovic SARAKHA
 # URL: http://code.google.com/p/sickbeard/
 #
 # This file is part of Sick Beard.
@@ -25,11 +25,7 @@ from sickbeard import db
 from sickbeard import helpers, logger, show_name_helpers
 from sickbeard import providers
 from sickbeard import search
-from sickbeard import history
-
-from sickbeard.common import DOWNLOADED, SNATCHED, SNATCHED_FRENCH, Quality
-
-from lib.tvdb_api import tvdb_api, tvdb_exceptions
+from sickbeard.common import SNATCHED_FRENCH
 
 from name_parser.parser import NameParser, InvalidNameException
 
@@ -79,8 +75,12 @@ class FrenchFinder():
                 except:
                     logger.log(u"Exception", logger.DEBUG)
                     pass
-                for x in curfrench:
-                    result.append(x)
+                if curfrench:
+                    for x in curfrench:
+                        if not show_name_helpers.filterBadReleases(x.name) or not show_name_helpers.filterBadReleases(x.url):
+                            logger.log(u"French "+x.name+" isn't a valid scene release that we want, ignoring it", logger.DEBUG)
+                            continue
+                        result.append(x)
             best=None
             try:
                 epi={}

@@ -188,6 +188,10 @@ class BinNewzProvider(generic.NZBProvider):
                         continue
 
                 filename = cells[5].contents[0]
+                
+                if not show_name_helpers.filterBadReleases(filename):
+                    logger.log(u"Release "+filename+" isn't a valid scene release that we want, ignoring it", logger.DEBUG)
+                    continue
 
                 acceptedQualities = Quality.splitQuality(show.quality)[0]
                 quality = Quality.nameQuality(filename)
