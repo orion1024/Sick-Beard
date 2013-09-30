@@ -173,8 +173,7 @@ ep_regexes = [
                episode[. _-]+                              # episode and separator
                (?P<ep_num>\d+)[. _-]+                      # 02 and separator
                (?P<extra_info>.+)$                         # Source_Quality_Etc-
-               '''),
-              
+               '''),              
                             
               ('season_only',
                # Show.Name.S01.Source.Quality.Etc-Group

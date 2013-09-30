@@ -189,10 +189,6 @@ class BinNewzProvider(generic.NZBProvider):
 
                 filename = cells[5].contents[0]
                 
-                if not show_name_helpers.filterBadReleases(filename):
-                    logger.log(u"Release "+filename+" isn't a valid scene release that we want, ignoring it", logger.DEBUG)
-                    continue
-
                 acceptedQualities = Quality.splitQuality(show.quality)[0]
                 quality = Quality.nameQuality(filename)
                 if quality == Quality.UNKNOWN:
@@ -231,7 +227,7 @@ class BinNewzProvider(generic.NZBProvider):
                                     binsearch_result.audio_langs = 'fr'
                                 else:
                                     binsearch_result.audio_langs = show.audio_lang
-                                binsearch_result.title = name
+                                binsearch_result.title = searchString
                                 binsearch_result.quality = quality
                                 myDB = db.DBConnection()
                                 listlink = myDB.select("SELECT link from episode_links where episode_id =?", [globepid])
