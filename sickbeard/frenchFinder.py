@@ -26,8 +26,11 @@ from sickbeard import helpers, logger, show_name_helpers
 from sickbeard import providers
 from sickbeard import search
 from sickbeard.common import SNATCHED_FRENCH
+from sickbeard.common import showLanguages
+import re
 
-from name_parser.parser import NameParser, InvalidNameException
+resultFilters = ["sub(pack|s|bed)", "nlsub(bed|s)?", "swesub(bed)?",
+                 "(dir|sample|nfo)fix", "sample", "(dvd)?extras"]
 
 
 class FrenchFinder():
@@ -75,11 +78,23 @@ class FrenchFinder():
                 except:
                     logger.log(u"Exception", logger.DEBUG)
                     pass
+                test=0
                 if curfrench:
                     for x in curfrench:
                         if not show_name_helpers.filterBadReleases(x.name):
                             logger.log(u"French "+x.name+" isn't a valid scene release that we want, ignoring it", logger.DEBUG)
                             continue
+                        if sickbeard.IGNORE_WORDS == "":
+                            ignore_words="ztreyfgut"
+                        else:
+                            ignore_words=str(sickbeard.IGNORE_WORDS)
+                        for fil in resultFilters + ignore_words.split(','):
+                            if fil == showLanguages.get(u"fr"):
+                                continue
+                            if re.search('(^|[\W_])'+fil+'($|[\W_])', x.url, re.I):
+                                logger.log(u"Invalid scene release: "+x.url+" contains "+fil+", ignoring it", logger.DEBUG)
+                                test+=1
+                    if test==0:
                         result.append(x)
             best=None
             try:
