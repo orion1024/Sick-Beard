@@ -27,12 +27,12 @@ class BinSearch(NZBDownloader):
     def search(self, filename, minSize, newsgroup=None):
 
         if newsgroup != None:
-            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'adv_g' : newsgroup, 'q' : filename}), urllib.urlencode({'server' : 2, 'max': '250', 'adv_g' : newsgroup, 'q' : filename})]
+            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date'}), urllib.urlencode({'server' : 2, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date'})]
         else:
-            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'q' : filename}), urllib.urlencode({'server' : 2, 'max': '250', 'q' : filename})]
+            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'q' : filename, 'adv_sort' : 'date'}), urllib.urlencode({'server' : 2, 'max': '250', 'q' : filename, 'adv_sort' : 'date'})]
 
         for suffixURL in binSearchURLs:
-            binSearchURL = "http://binsearch.info/?adv_age=&" + suffixURL
+            binSearchURL = "https://binsearch.info/index.php?" + suffixURL
                     
             binSearchSoup = BeautifulSoup( self.open(binSearchURL) )
 
@@ -55,6 +55,6 @@ class BinSearch(NZBDownloader):
                 
             if foundName:
                 postData = urllib.urlencode({foundName: 'on', 'action': 'nzb'})
-                nzbURL = "https://binsearch.info/?adv_age=&" + suffixURL
+                nzbURL = "https://binsearch.info/index.php?" + suffixURL
                 return NZBPostURLSearchResult( self, nzbURL, postData, sizeInMegs, binSearchURL )
                     
