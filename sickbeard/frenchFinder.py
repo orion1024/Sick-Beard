@@ -83,6 +83,7 @@ class FrenchFinder():
                     for x in curfrench:
                         if not show_name_helpers.filterBadReleases(x.name):
                             logger.log(u"French "+x.name+" isn't a valid scene release that we want, ignoring it", logger.DEBUG)
+                            test+=1
                             continue
                         if sickbeard.IGNORE_WORDS == "":
                             ignore_words="ztreyfgut"
