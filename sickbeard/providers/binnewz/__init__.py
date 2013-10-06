@@ -87,7 +87,9 @@ class BinNewzProvider(generic.NZBProvider):
         showNam = show_name_helpers.allPossibleShowNames(show)
         showNames = list(set(showNam))
         result = []
-        global globepid
+        global globepid        
+        global searchstringlist
+        searchstringlist=[]
         globepid = show.tvdbid
         for showName in showNames:
             result.append(showName + ".saison %2d" % season)
@@ -98,6 +100,8 @@ class BinNewzProvider(generic.NZBProvider):
         showNam = show_name_helpers.allPossibleShowNames(ep_obj.show)
         showNames = list(set(showNam))
         global globepid
+        global searchstringlist
+        searchstringlist=[]
         myDB = db.DBConnection()
         epidr = myDB.select("SELECT episode_id from tv_episodes where tvdbid=?", [ep_obj.tvdbid])
         globepid = epidr[0][0]
@@ -195,8 +199,10 @@ class BinNewzProvider(generic.NZBProvider):
                     quality = self.getReleaseQuality(name)
                 if quality not in acceptedQualities:
                     continue
+                if filename in searchstringlist:
+                    continue
 
-                minSize = self.qualityMinSize[quality] if quality in self.qualityMinSize else 0
+                minSize = self.qualityMinSize[quality] if quality in self.qualityMinSize else 100
                 searchItems = []
                 #multiEpisodes = False
 
@@ -217,6 +223,7 @@ class BinNewzProvider(generic.NZBProvider):
 
                 for searchItem in searchItems:
                     for downloader in self.nzbDownloaders:
+                        searchstringlist.append(searchItem)
                         logger.log("Searching for download : " + name + ", search string = " + searchItem + " on " +
                                    downloader.__class__.__name__)
                         try:

@@ -27,9 +27,9 @@ class BinSearch(NZBDownloader):
     def search(self, filename, minSize, newsgroup=None):
 
         if newsgroup != None:
-            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date'}), urllib.urlencode({'server' : 2, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date'})]
+            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date', 'minsize' : str(minSize)}), urllib.urlencode({'server' : 2, 'max': '250', 'adv_g' : newsgroup, 'q' : filename, 'adv_sort' : 'date', 'minsize' : str(minSize)})]
         else:
-            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'q' : filename, 'adv_sort' : 'date'}), urllib.urlencode({'server' : 2, 'max': '250', 'q' : filename, 'adv_sort' : 'date'})]
+            binSearchURLs = [  urllib.urlencode({'server' : 1, 'max': '250', 'q' : filename, 'adv_sort' : 'date', 'minsize' : str(minSize)}), urllib.urlencode({'server' : 2, 'max': '250', 'q' : filename, 'adv_sort' : 'date', 'minsize' : str(minSize)})]
 
         for suffixURL in binSearchURLs:
             binSearchURL = "https://binsearch.info/index.php?" + suffixURL
@@ -39,7 +39,11 @@ class BinSearch(NZBDownloader):
             foundName = None
             sizeInMegs = None
             for elem in binSearchSoup.findAll(lambda tag: tag.name=='tr' and tag.get('bgcolor') == '#FFFFFF' and 'size:' in tag.text):
+                if foundName:
+                    break
                 for checkbox in elem.findAll(lambda tag: tag.name=='input' and tag.get('type') == 'checkbox'):
+                    if foundName:
+                        break
                     sizeStr = re.search("size:\s+([^B]*)B", elem.text).group(1).strip()
                     
                     if "G" in sizeStr:
@@ -55,6 +59,6 @@ class BinSearch(NZBDownloader):
                 
             if foundName:
                 postData = urllib.urlencode({foundName: 'on', 'action': 'nzb'})
-                nzbURL = "https://binsearch.info/index.php?" + suffixURL
+                nzbURL = binSearchURL
                 return NZBPostURLSearchResult( self, nzbURL, postData, sizeInMegs, binSearchURL )
                     
