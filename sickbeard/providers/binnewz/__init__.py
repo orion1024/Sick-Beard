@@ -247,7 +247,7 @@ class BinNewzProvider(generic.NZBProvider):
                                     logger.log("Found : " + searchItem + " on " + downloader.__class__.__name__)
                                     break
                         except Exception, e:
-                            logger.log("Searching from " + downloader.__class__.__name__ + " failed : " + ex(e),
+                            logger.log("Searching from " + downloader.__class__.__name__ + " failed : " + e,
                                        logger.ERROR)
 
         return results
