@@ -123,7 +123,7 @@ class GksProvider(generic.TorrentProvider):
                 if season:
                     count=0
                     if show:
-                        if show.audio_lang=='fr':
+                        if show.audio_lang=='fr' or french:
                             for frword in['french', 'truefrench', 'multi']:
                                 if frword in title.lower():
                                     count+=1
