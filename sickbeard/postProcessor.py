@@ -709,7 +709,12 @@ class PostProcessor(object):
     
             # now that we've figured out which episode this file is just load it manually
             try:
-                curEp = show_obj.getEpisode(season, episode, scene=scene)
+                myDB = db.DBConnection()
+                is_scene = myDB.select("SELECT scene_episode FROM tv_episodes WHERE showid = ? AND scene_season = ? AND scene_episode = ?", [tvdb_id, season, episode])
+                if is_scene and scene:
+                    curEp = show_obj.getEpisode(season, episode, scene=True)
+                else:
+                    curEp = show_obj.getEpisode(season, episode, scene=False)
             except exceptions.EpisodeNotFoundException, e:
                 self._log(u"Unable to create episode: "+ex(e), logger.DEBUG)
                 raise exceptions.PostProcessingFailed()

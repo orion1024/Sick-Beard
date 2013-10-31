@@ -183,6 +183,7 @@ class TVShow(object):
 
         #return TVEpisode(self, season, episode)
         def createCurSeasonDict():
+            
             if not season in self.episodes:
                 self.episodes[season] = {}
         createCurSeasonDict()
