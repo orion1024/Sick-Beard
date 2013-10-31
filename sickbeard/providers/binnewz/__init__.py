@@ -106,22 +106,22 @@ class BinNewzProvider(generic.NZBProvider):
         epidr = myDB.select("SELECT episode_id from tv_episodes where tvdbid=?", [ep_obj.tvdbid])
         globepid = epidr[0][0]
         for showName in showNames:
-            strings.append("%s S%02dE%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02dE%d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%dE%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s %dx%d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d E%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d E%d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%d E%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02dEp%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02dEp%d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%dEp%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d Ep%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d Ep%d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%d Ep%02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d Ep %02d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%02d Ep %d" % (showName, ep_obj.season, ep_obj.episode))
-            strings.append("%s S%d Ep %02d" % (showName, ep_obj.season, ep_obj.episode))
+            strings.append("%s S%02dE%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02dE%d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%dE%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s %dx%d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d E%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d E%d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%d E%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02dEp%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02dEp%d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%dEp%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d Ep%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d Ep%d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%d Ep%02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d Ep %02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%02d Ep %d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
+            strings.append("%s S%d Ep %02d" % (showName, ep_obj.scene_season, ep_obj.scene_episode))
         return strings
 
     def _get_title_and_url(self, item):
@@ -144,7 +144,7 @@ class BinNewzProvider(generic.NZBProvider):
         if searchString is None:
             return []
         logger.log("BinNewz : Searching for " + searchString, logger.DEBUG)
-        data = self.buildUrl(searchString, show.quality)
+        data = self.buildUrl(searchString.replace('!',''), show.quality)
         try:
             soup = BeautifulSoup(urllib2.urlopen("http://www.binnews.in/_bin/search2.php",
                                                  urllib.urlencode(data, True)))

@@ -140,8 +140,8 @@ class NewznabProvider(generic.NZBProvider):
                 params['ep'] = date_str.partition('-')[2].replace('-', '/')
                 
             else:
-                params['season'] = ep_obj.season
-                params['ep'] = ep_obj.episode
+                params['season'] = ep_obj.scene_season
+                params['ep'] = ep_obj.scene_episode
 
                 to_return = [params]
 
@@ -176,7 +176,7 @@ class NewznabProvider(generic.NZBProvider):
         return parse_result.audio_langs    
 
     def _doGeneralSearch(self, search_string):
-        return self._doSearch({'q': search_string})
+        return self._doSearch({'q': search_string.replace('!','')})
 
     def _checkAuthFromData(self, data):
 

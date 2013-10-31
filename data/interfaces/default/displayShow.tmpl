@@ -293,13 +293,17 @@
   #end if	
 
   #if int($epResult["season"]) != $curSeason:
-  <tr><td colspan="9"  style="height: 0px; padding:0; margin:0;"><a name="season-$epResult["season"]"></a></td></tr>
+  <tr><td colspan="#if $showSceneNumberColum then "10" else "9"#"  style="height: 0px; padding:0; margin:0;"><a name="season-$epResult["season"]"></a></td></tr>
   <tr class="seasonheader" id="season-$epResult["season"]" >
-    <td colspan="9">
+    <td colspan="#if $showSceneNumberColum then "10" else "9"#">
         <h2>#if int($epResult["season"]) == 0 then "Specials" else "Season "+str($epResult["season"])#</h2>
     </td>
   </tr>
-  <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" /></th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th><th>Audio</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subs</th>" else ""#<th>Status</th><th>Search</th><th>Hist</th></tr>
+  <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" />
+  #if $showSceneNumberColum
+  <th>XEM</th>
+  #end if
+  </th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th><th>Audio</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subs</th>" else ""#<th>Status</th><th>Search</th><th>Hist</th></tr>
         #set $curSeason = int($epResult["season"])
   #end if    
 
@@ -311,6 +315,15 @@
       <input type="checkbox" class="epCheck" id="<%=str(epResult["season"])+'x'+str(epResult["episode"])%>" name="<%=str(epResult["season"]) +"x"+str(epResult["episode"]) %>" />
 #end if
     </td>
+    #if $showSceneNumberColum
+    <td align="center">
+    #if isinstance($epResult["scene_season"], int) and isinstance($epResult["scene_episode"], int)
+    <img src="$sbRoot/images/scn.gif" alt="Y" width="16" height="16" title="Scene number $epResult["scene_season"] x $epResult["scene_episode"]"/>
+    #else
+    <img src="$sbRoot/images/scn-no.gif" alt="N" width="16" height="16" title="No scene number" />
+    #end if
+    </td>
+    #end if
     <td align="center">$epResult["episode"]</td>
     <td class="title">
     #if $epResult["description"] != "" and $epResult["description"] != None:

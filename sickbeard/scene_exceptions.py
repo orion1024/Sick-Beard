@@ -18,19 +18,25 @@
 
 import re
 import os
+import urllib, urllib2, httplib
 import sickbeard
 from sickbeard import helpers
 from sickbeard import name_cache
 from sickbeard import logger
 from sickbeard import db
+try:
+    import json
+except ImportError:
+    from lib import simplejson as json
+from sickbeard.exceptions import ex
 
-def get_scene_exceptions(tvdb_id):
+def get_scene_exceptions(tvdb_id, season=-1):
     """
     Given a tvdb_id, return a list of all the scene exceptions.
     """
 
     myDB = db.DBConnection("cache.db")
-    exceptions = myDB.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ?", [tvdb_id])
+    exceptions = myDB.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? and season= ?", [tvdb_id, season])
     return [cur_exception["show_name"] for cur_exception in exceptions]
 
 
@@ -94,34 +100,27 @@ def retrieve_exceptions():
             tvdb_id = int(tvdb_id)
 
             # regex out the list of shows, taking \' into account
-            alias_list = [re.sub(r'\\(.)', r'\1', x) for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
+            alias_list = [{re.sub(r'\\(.)', r'\1', x):-1} for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
 
             exception_dict[tvdb_id] = alias_list
 
-        myDB = db.DBConnection("cache.db")
+        xem_exceptions = _xem_excpetions_fetcher()
+        exception_dict = dict(xem_exceptions.items() + exception_dict.items())
 
-        changed_exceptions = False
+        if not len(exception_dict):
+            logger.log("Retreived exception list is totally empty. Assuming remote server error not flushing local and stoping now")
+            return False
+
+        myDB = db.DBConnection("cache.db")
+        myDB.action("DELETE FROM scene_exceptions") # flush current list
 
         # write all the exceptions we got off the net into the database
         for cur_tvdb_id in exception_dict:
-
-            # get a list of the existing exceptions for this ID
-            existing_exceptions = [x["show_name"] for x in myDB.select("SELECT * FROM scene_exceptions WHERE tvdb_id = ?", [cur_tvdb_id])]
-
-            for cur_exception in exception_dict[cur_tvdb_id]:
-                # if this exception isn't already in the DB then add it
-                if cur_exception not in existing_exceptions:
-                    myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [cur_tvdb_id, cur_exception])
-                    changed_exceptions = True
-
-        # since this could invalidate the results of the cache we clear it out after updating
-        if changed_exceptions:
-            logger.log(u"Updated scene exceptions")
-            name_cache.clearCache()
-            f.close()
-        else:
-            logger.log(u"No scene exceptions update needed")
-            f.close()
+            for cur_exception_dict in exception_dict[cur_tvdb_id]:
+                cur_exception, curSeason = cur_exception_dict.items()[0]
+                myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name, season) VALUES (?,?,?)", [cur_tvdb_id, cur_exception, curSeason])
+        name_cache.clearCache()
+        f.close()
 def update_scene_exceptions(tvdb_id, scene_exceptions):
     """
     Given a tvdb_id, and a list of all show scene exceptions, update the db.
@@ -135,3 +134,38 @@ def update_scene_exceptions(tvdb_id, scene_exceptions):
         myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [tvdb_id, cur_exception])
     
     name_cache.clearCache()
+def _xem_excpetions_fetcher():
+    exception_dict = {}
+    opener = urllib2.build_opener()
+
+    url = "http://thexem.de/map/allNames?origin=tvdb&seasonNumbers=1"
+    try:
+        f = opener.open(url)
+    except (EOFError, IOError), e:
+        logger.log(u"Unable to connect to XEM. Is thexem.de down ?" + ex(e), logger.ERROR)
+        return exception_dict
+    except httplib.InvalidURL, e:
+        logger.log(u"Invalid XEM host. Is thexem.de down ?: " + ex(e), logger.ERROR)
+        return exception_dict
+    if not f:
+        logger.log(u"Empty response from " + url + ": " + ex(e), logger.ERROR)
+        return exception_dict
+    try:
+        xemJson = json.loads(f.read())
+    except ValueError, e:
+        pass
+
+    if xemJson['result'] == 'failure':
+        return exception_dict
+
+    for tvdbid, names in xemJson['data'].items():
+        exception_dict[int(tvdbid)] = names
+
+    logger.log(u"xem exception dict: " + str(exception_dict), logger.DEBUG)
+    return exception_dict
+def getSceneSeasons(tvdb_id):
+    """get a list of season numbers that have scene excpetions
+    """
+    myDB = db.DBConnection("cache.db")
+    seasons = myDB.select("SELECT DISTINCT season FROM scene_exceptions WHERE tvdb_id = ?", [tvdb_id])
+    return [cur_exception["season"] for cur_exception in seasons]

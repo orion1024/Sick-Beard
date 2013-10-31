@@ -115,9 +115,9 @@ def sceneToNormalShowNames(name):
 
     return list(set(results))
 
-def makeSceneShowSearchStrings(show):
+def makeSceneShowSearchStrings(show, season=-1):
 
-    showNames = allPossibleShowNames(show)
+    showNames = allPossibleShowNames(show,season=season)
 
     # scenify the names
     return map(sanitizeSceneName, showNames)
@@ -191,15 +191,17 @@ def makeSceneSearchString (episode):
     if episode.show.air_by_date and episode.airdate != datetime.date.fromordinal(1):
         epStrings = [str(episode.airdate)]
     else:
-        epStrings = ["S%02iE%02i" % (int(episode.season), int(episode.episode)),
-                    "%ix%02i" % (int(episode.season), int(episode.episode))]
+        epStrings = ["S%02iE%02i" % (int(episode.scene_season), int(episode.scene_episode)),
+                    "%ix%02i" % (int(episode.scene_season), int(episode.scene_episode))]
+
+ 
 
     # for single-season shows just search for the show name -- if total ep count (exclude s0) is less than 11
     # due to the amount of qualities and releases, it is easy to go over the 50 result limit on rss feeds otherwise
     if numseasons == 1 and numepisodes < 11:
         epStrings = ['']
 
-    showNames = set(makeSceneShowSearchStrings(episode.show))
+    showNames = set(makeSceneShowSearchStrings(episode.show, episode.scene_season))
 
     toReturn = []
 
@@ -209,12 +211,12 @@ def makeSceneSearchString (episode):
 
     return toReturn
 
-def isGoodResult(name, show, log=True):
+def isGoodResult(name, show, log=True, season=-1):
     """
     Use an automatically-created regex to make sure the result actually is the show it claims to be
     """
 
-    all_show_names = allPossibleShowNames(show)
+    all_show_names = allPossibleShowNames(show,season=season)
     showNames = map(sanitizeSceneName, all_show_names) + all_show_names
 
     for curName in set(showNames):
@@ -235,7 +237,7 @@ def isGoodResult(name, show, log=True):
         logger.log(u"Provider gave result "+name+" but that doesn't seem like a valid result for "+show.name+" so I'm ignoring it")
     return False
 
-def allPossibleShowNames(show):
+def allPossibleShowNames(show, season=-1):
     """
     Figures out every possible variation of the name for a particular show. Includes TVDB name, TVRage name,
     country codes on the end, eg. "Show Name (AU)", and any scene exception names.
@@ -245,7 +247,9 @@ def allPossibleShowNames(show):
     Returns: a list of all the possible show names
     """
 
-    showNames = [show.name]
+    showNames = []
+    if season is -1:
+        showNames = [show.name]
     for name in get_scene_exceptions(show.tvdbid):
         if not name in showNames:
             showNames.append( name )

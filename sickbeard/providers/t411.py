@@ -84,19 +84,19 @@ class T411Provider(generic.TorrentProvider):
         showNames = list(set(showNam))
         results = []
         for showName in showNames:
-            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.season, ep_obj.episode), ep_obj.show.audio_lang, 433, french ))
-            if (int(ep_obj.season) < 31 and int(ep_obj.episode) < 61):
-                results.append( self.getSearchParams( showName, ep_obj.show.audio_lang, 433, french)+ "&" + urllib.urlencode({'term[46][]': self.episodeValue(ep_obj.episode), 'term[45][]': self.seasonValue(ep_obj.season)}))
+            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode), ep_obj.show.audio_lang, 433, french ))
+            if (int(ep_obj.scene_season) < 31 and int(ep_obj.scene_episode) < 61):
+                results.append( self.getSearchParams( showName, ep_obj.show.audio_lang, 433, french)+ "&" + urllib.urlencode({'term[46][]': self.episodeValue(ep_obj.scene_episode), 'term[45][]': self.seasonValue(ep_obj.scene_season)}))
             #results.append( self.getSearchParams( "%s %dx%d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang , 433 )) MAY RETURN 1x12 WHEN SEARCHING 1x1
-            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang, 433, french ))
-            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.season, ep_obj.episode), ep_obj.show.audio_lang, 637, french ))
-            if (int(ep_obj.season) < 31 and int(ep_obj.episode) < 61):
-                results.append( self.getSearchParams( showName, ep_obj.show.audio_lang, 637, french)+ "&" + urllib.urlencode({'term[46][]': self.episodeValue(ep_obj.episode), 'term[45][]': self.seasonValue(ep_obj.season)}))
+            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode ), ep_obj.show.audio_lang, 433, french ))
+            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode), ep_obj.show.audio_lang, 637, french ))
+            if (int(ep_obj.scene_season) < 31 and int(ep_obj.scene_episode) < 61):
+                results.append( self.getSearchParams( showName, ep_obj.show.audio_lang, 637, french)+ "&" + urllib.urlencode({'term[46][]': self.episodeValue(ep_obj.scene_episode), 'term[45][]': self.seasonValue(ep_obj.scene_season)}))
             #results.append( self.getSearchParams( "%s %dx%d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang, 637 ))
-            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang, 637, french ))
-            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.season, ep_obj.episode), ep_obj.show.audio_lang, 634, french))
+            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode ), ep_obj.show.audio_lang, 637, french ))
+            results.append( self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode), ep_obj.show.audio_lang, 634, french))
             #results.append( self.getSearchParams( "%s %dx%d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang, 634 ))
-            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.season, ep_obj.episode ), ep_obj.show.audio_lang, 634, french ))
+            results.append( self.getSearchParams( "%s %dx%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode ), ep_obj.show.audio_lang, 634, french ))
         return results
     
     def _get_title_and_url(self, item):
@@ -116,7 +116,7 @@ class T411Provider(generic.TorrentProvider):
             self._doLogin( sickbeard.T411_USERNAME, sickbeard.T411_PASSWORD )
 
         results = []
-        searchUrl = self.url + '/torrents/search/?' + searchString
+        searchUrl = self.url + '/torrents/search/?' + searchString.replace('!','')
         logger.log(u"Search string: " + searchUrl, logger.DEBUG)
         
         r = self.opener.open( searchUrl )

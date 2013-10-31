@@ -365,6 +365,11 @@ class QueueItemAdd(ShowQueueItem):
             logger.log(u"Setting all episodes to the specified default status: " + str(self.default_status))
             myDB = db.DBConnection()
             myDB.action("UPDATE tv_episodes SET status = ? WHERE status = ? AND showid = ? AND season != 0", [self.default_status, SKIPPED, self.show.tvdbid])
+        logger.log(u"Attempting to load scene numbers", logger.DEBUG)
+        if self.show.loadEpisodeSceneNumbers():
+            logger.log(u"loading scene numbers successfull", logger.DEBUG)
+        else:
+            logger.log(u"loading scene numbers NOT successfull or no scene numbers available", logger.DEBUG)
 
         # if they started with WANTED eps then run the backlog
         if self.default_status == WANTED:
@@ -557,6 +562,12 @@ class QueueItemUpdate(ShowQueueItem):
                         curEp.deleteEpisode()
                     except exceptions.EpisodeDeletedException:
                         pass
+        logger.log(u"Attempting to load scene numbers", logger.DEBUG)
+        if self.show.loadEpisodeSceneNumbers():
+            logger.log(u"loading scene numbers successfull", logger.DEBUG)
+        else:
+            logger.log(u"loading scene numbers NOT successfull or no scene numbers available", logger.DEBUG)
+            
 
         # now that we've updated the DB from TVDB see if there's anything we can add from TVRage
         with self.show.lock:

@@ -52,12 +52,15 @@ class GksProvider(generic.TorrentProvider):
         else:
             if audio_lang == "en":
                 results.append( urllib.urlencode( {'q': searchString, 'category' : 22, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
+                results.append( urllib.urlencode( {'q': searchString, 'category' : 21, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
                 if sickbeard.USE_SUBTITLES :
                     results.append( urllib.urlencode( {'q': searchString, 'category' : 11, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
+                    results.append( urllib.urlencode( {'q': searchString, 'category' : 13, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
                     results.append( urllib.urlencode( {'q': searchString, 'category' : 13, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
             elif audio_lang == "fr":
                 results.append( urllib.urlencode( {'q': searchString, 'category' : 12, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
                 results.append( urllib.urlencode( {'q': searchString, 'category' : 14, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
+                results.append( urllib.urlencode( {'q': searchString, 'category' : 21, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
             else:
                 results.append( urllib.urlencode( {'q': searchString, 'ak' : sickbeard.GKS_KEY} ) + "&order=desc&sort=normal&exact" )
         return results
@@ -84,13 +87,13 @@ class GksProvider(generic.TorrentProvider):
                 lang='fr'
             else:
                 lang=ep_obj.show.audio_lang
-            for result in self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.season, ep_obj.episode), lang) :
+            for result in self.getSearchParams( "%s S%02dE%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode), lang) :
                 results.append(result)
         return results
         
     def _doSearch(self, searchString, show=None, season=None, french=None):
         results = []
-        searchUrl = self.url+'rdirect.php?type=search&'+searchString
+        searchUrl = self.url+'rdirect.php?type=search&'+searchString.replace('!','')
         logger.log(u"Search URL: " + searchUrl, logger.DEBUG)
         
         data = self.getURL(searchUrl)

@@ -60,8 +60,8 @@ class CpasbienProvider(generic.TorrentProvider):
 
         showNames = show_name_helpers.allPossibleShowNames(ep_obj.show)
         for showName in showNames:
-            strings.append("%s S%02dE%02d" % ( showName, ep_obj.season, ep_obj.episode) )
-            strings.append("%s %dx%d" % ( showName, ep_obj.season, ep_obj.episode ) )
+            strings.append("%s S%02dE%02d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode) )
+            strings.append("%s %dx%d" % ( showName, ep_obj.scene_season, ep_obj.scene_episode ) )
 
         return strings
     
@@ -76,7 +76,7 @@ class CpasbienProvider(generic.TorrentProvider):
         results = []
         searchUrl = self.url + '/recherche/'
         
-        data = urllib.urlencode({'champ_recherche': searchString})
+        data = urllib.urlencode({'champ_recherche': searchString.replace('!','')})
         req = urllib2.Request(searchUrl, data, headers={'User-Agent' : "Mozilla/5.0"})
         try:
             soup = BeautifulSoup( urllib2.urlopen(req) )

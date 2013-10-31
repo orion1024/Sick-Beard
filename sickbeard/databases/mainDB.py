@@ -25,7 +25,7 @@ from sickbeard.providers.generic import GenericProvider
 from sickbeard import encodingKludge as ek
 from sickbeard.name_parser.parser import NameParser, InvalidNameException
 
-MAX_DB_VERSION = 17
+MAX_DB_VERSION = 18
 
 
 class MainSanityCheck(db.DBSanityCheck):
@@ -744,4 +744,14 @@ class AddFrenchSearch (AddProcessedFilesTable):
         if self.hasColumn("tv_shows", "frenchsearch") != True:
             self.addColumn("tv_shows", "frenchsearch", "NUMERIC", 0)
         self.incDBVersion()
-   
+class AddSceneNumbers(FixAirByDateSetting):
+
+    def test(self):
+        return self.checkDBVersion() >= 18
+
+    def execute(self):
+
+        self.addColumn("tv_episodes", "scene_episode", "NUMERIC", "NULL")
+        self.addColumn("tv_episodes", "scene_season", "NUMERIC", "NULL")
+
+        self.incDBVersion()
