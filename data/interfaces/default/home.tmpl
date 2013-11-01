@@ -313,7 +313,13 @@ function setLayout(imdb,name){
 #set $network = $curShow.network
 #if $layout != 'simple':	
 	#if $curShow.network:
-		#set $network = "<img id='network' width='60' height='30' src='" + $sbRoot + "/images/network/" + $curShow.network.lower() + ".png' alt='" + $curShow.network + "' title='" + $curShow.network + "' />"
+		#if $curShow.network[0:7] == 'AlloCin':
+		#set $channel = 'allocine'
+		#else
+		#set $channel = $curShow.network
+		#end if	
+		#set $network = "<img id='network' width='60' height='30' src='" + $sbRoot + "/images/network/" + $channel.lower() + ".png' alt='" + $channel + "' title='" + $channel + "' />"
+	
 	#else:
 		#set $network = "<img id='network' width='60' height='30' src='" + $sbRoot + "/images/network/nonetwork.png' alt='No Network' title='No Network' />"
 	#end if
