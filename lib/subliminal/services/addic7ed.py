@@ -79,6 +79,7 @@ class Addic7ed(ServiceBase):
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
+        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (series,season,episode))
         try:
             series_id = self.get_series_id(series.lower())
         except KeyError:

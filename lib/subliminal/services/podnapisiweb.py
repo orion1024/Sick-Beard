@@ -27,7 +27,7 @@ import logging
 import re
 from subliminal.subtitles import get_subtitle_path
 from sickbeard import db
-
+from sickbeard import logger as glog
 logger = logging.getLogger("subliminal")
 
 
@@ -92,6 +92,7 @@ class PodnapisiWeb(ServiceBase):
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 title=sql_custom_names[0][0]
+        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (title,season,episode))
         params = {'sXML': 1, 'sK': title, 'sJ': ','.join([str(self.get_code(l)) for l in languages])}
         if season is not None:
             params['sTS'] = season

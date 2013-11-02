@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 import logging
 import re
 from sickbeard import db
-
+from sickbeard import logger as glog
 logger = logging.getLogger("subliminal")
 
 
@@ -127,6 +127,7 @@ class TvSubtitles(ServiceBase):
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
+        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (series,season,episode))
         sid = self.get_likely_series_id(series.lower())
         try:
             ep_id = self.get_episode_id(sid, season, episode)

@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 import logging
 import urllib
 from sickbeard import db
-
+from sickbeard import logger as glog
 logger = logging.getLogger("subliminal")
 
 class Usub(ServiceBase):
@@ -54,6 +54,7 @@ class Usub(ServiceBase):
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
+        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (series,season,episode))
         if series and season and episode:
             request_series = series.lower().replace(' ', '-')
             if isinstance(request_series, unicode):

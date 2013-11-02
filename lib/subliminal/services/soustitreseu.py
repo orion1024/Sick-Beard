@@ -26,7 +26,7 @@ import logging
 import urllib
 import re
 from sickbeard import db
-
+from sickbeard import logger as glog
 logger = logging.getLogger("subliminal")
 
 class Soustitreseu(ServiceBase):
@@ -65,6 +65,7 @@ class Soustitreseu(ServiceBase):
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
+        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (series,season,episode))
         if series and season and episode:
             request_series = series.lower()
             for k, v in self.replacement_char.iteritems():
