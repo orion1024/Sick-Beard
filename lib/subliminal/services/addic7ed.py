@@ -28,7 +28,7 @@ import logging
 import os
 import re
 from sickbeard import db
-
+from sickbeard import logger as glog
 
 logger = logging.getLogger("subliminal")
 
