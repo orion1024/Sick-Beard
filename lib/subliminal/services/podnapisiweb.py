@@ -86,13 +86,13 @@ class PodnapisiWeb(ServiceBase):
         sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+title+'%'])
         if sql_show_id:
             sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
-            if sql_scene:
+            if sql_scene[0][0]:
                 season=sql_scene[0][0]
                 episode= sql_scene[0][1]
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 title=sql_custom_names[0][0]
-        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (title,season,episode))
+        glog.log(u'Searching Subtitles on Podnapisiweb with title : %s season : %s episode : %s' % (title,season,episode))
         params = {'sXML': 1, 'sK': title, 'sJ': ','.join([str(self.get_code(l)) for l in languages])}
         if season is not None:
             params['sTS'] = season

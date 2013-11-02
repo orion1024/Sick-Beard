@@ -20,7 +20,7 @@ from ..language import language_set, Language
 from ..subtitles import get_subtitle_path, ResultSubtitle
 from ..videos import Episode, Movie, UnknownVideo
 import logging
-
+from sickbeard import logger as glog
 
 logger = logging.getLogger("subliminal")
 
@@ -40,7 +40,8 @@ class TheSubDB(ServiceBase):
     def list_checked(self, video, languages):
         return self.query(video.path, video.hashes['TheSubDB'], languages)
 
-    def query(self, filepath, moviehash, languages):
+    def query(self, filepath, moviehash, languages):        
+        glog.log(u'Searching Subtitles on thesubdb with hash : %s' % (moviehash))
         r = self.session.get(self.server_url, params={'action': 'search', 'hash': moviehash})
         if r.status_code == 404:
             logger.debug(u'Could not find subtitles for hash %s' % moviehash)

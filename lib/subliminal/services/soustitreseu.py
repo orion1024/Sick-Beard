@@ -59,13 +59,13 @@ class Soustitreseu(ServiceBase):
         sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
         if sql_show_id:
             sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
-            if sql_scene:
+            if sql_scene[0][0]:
                 season=sql_scene[0][0]
                 episode= sql_scene[0][1]
             sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
-        glog.log(u'Searching Subtitles with title : %s season : %s episode : %s' % (series,season,episode))
+        glog.log(u'Searching Subtitles on SoustitreEu with title : %s season : %s episode : %s' % (series,season,episode))
         if series and season and episode:
             request_series = series.lower()
             for k, v in self.replacement_char.iteritems():

@@ -25,7 +25,7 @@ import gzip
 import logging
 import os.path
 import xmlrpclib
-
+from sickbeard import logger as glog
 
 logger = logging.getLogger("subliminal")
 
@@ -112,6 +112,7 @@ class OpenSubtitles(ServiceBase):
         for search in searches:
             search['sublanguageid'] = ','.join(self.get_code(l) for l in languages)
         logger.debug(u'Getting subtitles %r with token %s' % (searches, self.token))
+        glog.log(u'Searching Subtitles on Opensubtitles with hash : %s' % (moviehash))
         results = self.server.SearchSubtitles(self.token, searches)
         if not results['data']:
             logger.debug(u'Could not find subtitles for %r with token %s' % (searches, self.token))
