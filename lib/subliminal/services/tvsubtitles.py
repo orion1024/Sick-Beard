@@ -24,7 +24,7 @@ from ..videos import Episode
 from bs4 import BeautifulSoup
 import logging
 import re
-
+from sickbeard import db
 
 logger = logging.getLogger("subliminal")
 
@@ -116,8 +116,17 @@ class TvSubtitles(ServiceBase):
     def query(self, filepath, languages, keywords, series, season, episode):
         logger.debug(u'Getting subtitles for %s season %d episode %d with languages %r' % (series, season, episode, languages))
         self.init_cache()
-        if series.lower()=="les simpson":
-            series="the simpsons"
+        myDB = db.DBConnection()
+        myDBcache = db.DBConnection("cache.db")
+        sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
+        if sql_show_id:
+            sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
+            if sql_scene:
+                season=sql_scene[0][0]
+                episode= sql_scene[0][1]
+            sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
+            if sql_custom_names:
+                series=sql_custom_names[0][0]
         sid = self.get_likely_series_id(series.lower())
         try:
             ep_id = self.get_episode_id(sid, season, episode)

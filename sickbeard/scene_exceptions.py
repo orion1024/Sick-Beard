@@ -47,7 +47,6 @@ def get_scene_exception_by_name(show_name):
     """
 
     myDB = db.DBConnection("cache.db")
-
     # try the obvious case first
     exception_result = myDB.select("SELECT tvdb_id FROM scene_exceptions WHERE LOWER(show_name) = ?", [show_name.lower()])
     if exception_result:
@@ -127,11 +126,15 @@ def update_scene_exceptions(tvdb_id, scene_exceptions):
     """
     
     myDB = db.DBConnection("cache.db")
-    
+    sql_cur_season = myDB.select("SELECT season FROM scene_exceptions WHERE tvdb_id=?", [tvdb_id])
+    if sql_cur_season:
+        cur_season = sql_cur_season[0][0]
+    else:
+        cur_season =-1
     myDB.action('DELETE FROM scene_exceptions WHERE tvdb_id=?', [tvdb_id])
     
     for cur_exception in scene_exceptions:
-        myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [tvdb_id, cur_exception])
+        myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name, season) VALUES (?,?,?)", [tvdb_id, cur_exception, cur_season])
     
     name_cache.clearCache()
 def _xem_excpetions_fetcher():

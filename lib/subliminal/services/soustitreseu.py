@@ -25,6 +25,7 @@ from bs4 import BeautifulSoup
 import logging
 import urllib
 import re
+from sickbeard import db
 
 logger = logging.getLogger("subliminal")
 
@@ -44,8 +45,7 @@ class Soustitreseu(ServiceBase):
     replacement_word = {
         "marvels_" : "", # marvels_agent_of_s_h_i_e_l_d => agent_of_s_h_i_e_l_d
         "s_h_i_e_l_d" : "shield", # agent_of_s_h_i_e_l_d => agent_of_shield
-        "fbi_duo_trés_spécial" : "white_collar",
-        "les_simpson" : 'the_simpsons'
+        "fbi_duo_trés_spécial" : "white_collar"
     }
     #required_features = ['permissive']
 
@@ -54,6 +54,17 @@ class Soustitreseu(ServiceBase):
 
     def query(self, filepath, languages, keywords=None, series=None, season=None, episode=None):
         ## Check if we really got informations about our episode
+        myDB = db.DBConnection()
+        myDBcache = db.DBConnection("cache.db")
+        sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
+        if sql_show_id:
+            sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
+            if sql_scene:
+                season=sql_scene[0][0]
+                episode= sql_scene[0][1]
+            sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
+            if sql_custom_names:
+                series=sql_custom_names[0][0]
         if series and season and episode:
             request_series = series.lower()
             for k, v in self.replacement_char.iteritems():
