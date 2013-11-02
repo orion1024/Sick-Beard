@@ -81,6 +81,8 @@ class PodnapisiWeb(ServiceBase):
                               episode=video.episode, keywords=get_keywords(video.guess))
 
     def query(self, filepath, languages, title, season=None, episode=None, year=None, keywords=None):
+        if title.lower()=="les simpson":
+            title="the simpsons"
         params = {'sXML': 1, 'sK': title, 'sJ': ','.join([str(self.get_code(l)) for l in languages])}
         if season is not None:
             params['sTS'] = season

@@ -44,7 +44,8 @@ class Soustitreseu(ServiceBase):
     replacement_word = {
         "marvels_" : "", # marvels_agent_of_s_h_i_e_l_d => agent_of_s_h_i_e_l_d
         "s_h_i_e_l_d" : "shield", # agent_of_s_h_i_e_l_d => agent_of_shield
-        "fbi_duo_trés_spécial" : "white_collar"
+        "fbi_duo_trés_spécial" : "white_collar",
+        "les_simpson" : 'the_simpsons'
     }
     #required_features = ['permissive']
 

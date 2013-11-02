@@ -116,6 +116,8 @@ class TvSubtitles(ServiceBase):
     def query(self, filepath, languages, keywords, series, season, episode):
         logger.debug(u'Getting subtitles for %s season %d episode %d with languages %r' % (series, season, episode, languages))
         self.init_cache()
+        if series.lower()=="les simpson":
+            series="the simpsons"
         sid = self.get_likely_series_id(series.lower())
         try:
             ep_id = self.get_episode_id(sid, season, episode)

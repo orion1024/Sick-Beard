@@ -42,6 +42,8 @@ class Usub(ServiceBase):
     def query(self, filepath, languages, keywords=None, series=None, season=None, episode=None):
         
         ## Check if we really got informations about our episode
+        if series.lower()=="les simpson":
+            series="the simpsons"
         if series and season and episode:
             request_series = series.lower().replace(' ', '-')
             if isinstance(request_series, unicode):

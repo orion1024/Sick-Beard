@@ -67,6 +67,8 @@ class Addic7ed(ServiceBase):
 
         logger.debug(u'Getting subtitles for %s season %d episode %d with languages %r' % (series, season, episode, languages))
         self.init_cache()
+        if series.lower()=="les simpson":
+            series="the simpsons"
         try:
             series_id = self.get_series_id(series.lower())
         except KeyError:
