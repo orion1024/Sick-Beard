@@ -70,13 +70,14 @@ class Addic7ed(ServiceBase):
         self.init_cache()
         myDB = db.DBConnection()
         myDBcache = db.DBConnection("cache.db")
-        sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
-        if sql_show_id:
+        sql_show_id = myDB.select("SELECT tvdb_id, show_name FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
+        if sql_show_id[0][0]:
             sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
+            real_name=sql_show_id[0][1]
             if sql_scene[0][0]:
                 season=sql_scene[0][0]
                 episode= sql_scene[0][1]
-            sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? ORDER BY exception_id asc", [sql_show_id[0][0]])
+            sql_custom_names = myDBcache.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ? and show_name<> ? ORDER BY exception_id asc", [sql_show_id[0][0],real_name])
             if sql_custom_names:
                 series=sql_custom_names[0][0]
         glog.log(u'Searching Subtitles on addic7ed with title : %s season : %s episode : %s' % (series,season,episode))
