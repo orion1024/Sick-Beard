@@ -118,7 +118,7 @@ class TvSubtitles(ServiceBase):
         self.init_cache()
         myDB = db.DBConnection()
         myDBcache = db.DBConnection("cache.db")
-        sql_show_id = myDB.select("SELECT tvdb_id FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
+        sql_show_id = myDB.select("SELECT tvdb_id, show_name FROM tv_shows WHERE show_name LIKE ?", ['%'+series+'%'])
         if sql_show_id[0][0]:
             sql_scene = myDB.select("SELECT scene_season, scene_episode FROM tv_episodes WHERE showid = ? and season = ? and episode = ?", [sql_show_id[0][0],season,episode])
             real_name=sql_show_id[0][1]
