@@ -28,8 +28,11 @@ class TransmissionAPI(GenericClient):
     def __init__(self, host=None, username=None, password=None):
         
         super(TransmissionAPI, self).__init__('Transmission', host, username, password)
-      
-        self.url = self.host + 'transmission/rpc'
+        
+        if self.host.endswith(':\d{2,4}/?'):
+	    self.url = self.host + 'transmission/rpc'
+	else
+	    self.url = self.host + 'rpc' 
 
     def _get_auth(self):
 
