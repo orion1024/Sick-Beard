@@ -659,9 +659,9 @@ class PostProcessor(object):
             
             if tvdb_id and season != None and episodes:
                 season, episodes = self._sceneToTVDBNumbers(tvdb_id, season, episodes)
-                return (tvdb_id, season, episodes)
-        season, episodes = self._sceneToTVDBNumbers(tvdb_id, season, episodes)
-        return (tvdb_id, season, episodes)
+                
+        return (tvdb_id, season, episodes)  
+        
     def _sceneToTVDBNumbers(self, tvdb_id, season, episodes):
         
         self._log(u"This looks like a scene release converting scene numbers to tvdb numbers", logger.DEBUG)
