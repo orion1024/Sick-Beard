@@ -1013,8 +1013,11 @@ class ConfigSearch:
     @cherrypy.expose
     def saveSearch(self, use_nzbs=None, use_torrents=None, nzb_dir=None, sab_username=None, sab_password=None,
                        sab_apikey=None, sab_category=None, sab_host=None, nzbget_password=None, nzbget_category=None, nzbget_host=None,
-                       torrent_dir=None,torrent_method=None, nzb_method=None, usenet_retention=None, search_frequency=None, french_delay=None, download_propers=None, download_french=None, torrent_username=None, torrent_password=None, torrent_host=None, torrent_label=None, torrent_path=None, 
-                       torrent_ratio=None, torrent_paused=None, ignore_words=None, prefered_method=None, torrent_use_ftp = None, ftp_host=None, ftp_port=None, ftp_timeout=None, ftp_passive = None, ftp_login=None, ftp_password=None, ftp_remotedir=None):
+                       torrent_dir=None,torrent_method=None, nzb_method=None, usenet_retention=None, search_frequency=None, french_delay=None, 
+                       download_propers=None, download_french=None, torrent_username=None, torrent_password=None, torrent_host=None, 
+                       torrent_label=None, torrent_path=None, torrent_custom_url=None, torrent_ratio=None, torrent_paused=None, ignore_words=None, 
+                       prefered_method=None, torrent_use_ftp = None, ftp_host=None, ftp_port=None, ftp_timeout=None, ftp_passive = None, ftp_login=None, 
+                       ftp_password=None, ftp_remotedir=None):
 
         results = []
 
@@ -1095,6 +1098,11 @@ class ConfigSearch:
         sickbeard.TORRENT_PASSWORD = torrent_password
         sickbeard.TORRENT_LABEL = torrent_label
         sickbeard.TORRENT_PATH = torrent_path
+        if torrent_custom_url == "on":
+            torrent_custom_url = 1
+        else:
+            torrent_custom_url = 0
+        sickbeard.TORRENT_CUSTOM_URL = torrent_custom_url
         sickbeard.TORRENT_RATIO = torrent_ratio
         if torrent_paused == "on":
             torrent_paused = 1

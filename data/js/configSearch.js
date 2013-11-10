@@ -49,6 +49,7 @@ $(document).ready(function(){
             $('#t_blackhole_settings').hide();
             $('#torrent_settings').show();
             $('#Torrent_username').show()
+            $('#Torrent_custom_url').hide();
             $('#Torrent_Path').hide();
             $('#Torrent_Ratio').hide();
             $('#Torrent_Label').show()
@@ -62,6 +63,7 @@ $(document).ready(function(){
             $('#torrent_settings').show();
             $('#Torrent_username').show();
             $('#Torrent_Path').show();
+            $('#Torrent_custom_url').show();
             $('#Torrent_Ratio').show();
             $('#Torrent_Label').hide();
             $('#host_desc').html('Transmission Host');
@@ -74,6 +76,7 @@ $(document).ready(function(){
             $('#torrent_settings').show();
             $('#Torrent_Label').show();            
             $('#Torrent_username').hide();
+            $('#Torrent_custom_url').hide();
             $('#Torrent_Path').show();
             $('#Torrent_Ratio').show();
             $('#host_desc').text('Deluge Host');
@@ -87,6 +90,7 @@ $(document).ready(function(){
             $('#torrent_settings').show();
             $('#Torrent_Label').hide();            
             $('#Torrent_username').show();
+            $('#Torrent_custom_url').hide();
             $('#Torrent_Paused').hide();
             $('#Torrent_Path').hide();
             $('#Torrent_Ratio').hide();

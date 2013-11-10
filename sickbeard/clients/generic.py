@@ -11,12 +11,13 @@ from lib import requests
 
 class GenericClient(object):
     
-    def __init__(self, name, host=None, username=None, password=None):
+    def __init__(self, name, host=None, username=None, password=None, custom_url=None):
 
         self.name = name
         self.username = sickbeard.TORRENT_USERNAME if username is None else username
         self.password = sickbeard.TORRENT_PASSWORD if password is None else password
         self.host = sickbeard.TORRENT_HOST if host is None else host
+        self.custom_url = sickbeard.TORRENT_CUSTOM_URL if custom_url is None else custom_url
         
         self.url = None
         self.response = None

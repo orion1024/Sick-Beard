@@ -25,11 +25,16 @@ from sickbeard.clients.generic import GenericClient
 
 class TransmissionAPI(GenericClient):
     
-    def __init__(self, host=None, username=None, password=None):
-        
+    def __init__(self, host=None, username=None, password=None, custom_url=None): #TODO : plug that custom_url argument to live data
+               
         super(TransmissionAPI, self).__init__('Transmission', host, username, password)
         
-        self.url = self.host + 'transmission/rpc' 
+        self.custom_url = sickbeard.TORRENT_CUSTOM_URL if custom_url is None else custom_url
+        
+        if self.custom_url:
+            self.url = self.host + 'rpc'
+        else:
+            self.url = self.host + 'transmission/rpc' 
 
     def _get_auth(self):
 

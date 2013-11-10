@@ -449,6 +449,17 @@
                                 </label>
                             </div>
 
+                            <div class="field-pair" id="Torrent_custom_url">
+                                <label class="nocheck clearfix">
+                                    <span class="component-title" id="torrent_custom_url_desc">Use Custom URL</span>
+                                    <input type="checkbox" name="torrent_custom_url" class="enabler" id="torrent_custom_url" #if $sickbeard.TORRENT_CUSTOM_URL == True then "checked=\"checked\"" else ""# />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">Web interface answers on different folder? (default : false)</span>
+                                </label>
+                            </div>
+
                             <div class="field-pair" id="Torrent_username">
                                 <label class="nocheck clearfix">
                                     <span class="component-title" id="username_desc">Torrent Username</span>
