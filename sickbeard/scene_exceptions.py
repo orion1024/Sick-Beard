@@ -111,6 +111,7 @@ def retrieve_exceptions():
             return False
 
         myDB = db.DBConnection("cache.db")
+        myDB.action("DELETE FROM scene_exceptions") # flush current list
         
         # write all the exceptions we got off the net into the database
         for cur_tvdb_id in exception_dict:
@@ -118,8 +119,8 @@ def retrieve_exceptions():
             existing_exceptions = [x["show_name"] for x in myDB.select("SELECT * FROM scene_exceptions WHERE tvdb_id = ?", [cur_tvdb_id])]
             for cur_exception_dict in exception_dict[cur_tvdb_id]:
                 # if this exception isn't already in the DB then add it
-                if cur_exception_dict not in existing_exceptions:
-                    cur_exception, curSeason = cur_exception_dict.items()[0]
+                cur_exception, curSeason = cur_exception_dict.items()[0]
+                if cur_exception not in existing_exceptions:
                     myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name, season) VALUES (?,?,?)", [cur_tvdb_id, cur_exception, curSeason])
         name_cache.clearCache()
         f.close()

@@ -521,7 +521,7 @@ class TVShow(object):
 
         if len(parse_result.episode_numbers) == 0 and not parse_result.air_by_date:
             logger.log("parse_result: "+str(parse_result))
-            logger.log(u"No episode number found in "+file+", ignoring it", logger.ERROR)
+            logger.log(u"No episode number found in "+file+", ignoring it", logger.DEBUG)
             return None
 
         # for now lets assume that any episode in the show dir belongs to that show
