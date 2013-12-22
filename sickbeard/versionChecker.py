@@ -116,7 +116,7 @@ class WindowsUpdateManager(UpdateManager):
         self._newest_version = None
 
         self.gc_url = 'http://code.google.com/p/sickbeard/downloads/list'
-        self.version_url = 'https://raw.github.com/sarakha63/Sick-Beard/windows_binaries/updates.txt'
+        self.version_url = 'https://raw.github.com/orion1024/Sick-Beard/windows_binaries/updates.txt'
 
     def _find_installed_version(self):
         return int(sickbeard.version.SICKBEARD_VERSION[6:])
@@ -316,7 +316,7 @@ class GitUpdateManager(UpdateManager):
         gh = github.GitHub()
 
         # find newest commit
-        for curCommit in gh.commits('sarakha63', 'Sick-Beard', self.branch):
+        for curCommit in gh.commits('orion1024', 'Sick-Beard', self.branch):
             if not self._newest_commit_hash:
                 self._newest_commit_hash = curCommit['sha']
                 if not self._cur_commit_hash:
@@ -344,9 +344,9 @@ class GitUpdateManager(UpdateManager):
             return
 
         if self._newest_commit_hash:
-            url = 'http://github.com/sarakha63/Sick-Beard/compare/'+self._cur_commit_hash+'...'+self._newest_commit_hash
+            url = 'http://github.com/orion1024/Sick-Beard/compare/'+self._cur_commit_hash+'...'+self._newest_commit_hash
         else:
-            url = 'http://github.com/sarakha63/Sick-Beard/commits/'
+            url = 'http://github.com/orion1024/Sick-Beard/commits/'
 
         new_str = 'There is a <a href="'+url+'" onclick="window.open(this.href); return false;">newer version available</a> ('+message+')'
         new_str += "&mdash; <a href=\""+self.get_update_url()+"\">UPDATE NOW</a>"
@@ -372,9 +372,9 @@ class GitUpdateManager(UpdateManager):
         Calls git pull origin <branch> in order to update Sick Beard. Returns a bool depending
         on the call's success.
         """
-        self._run_git('config remote.origin.url git://github.com/sarakha63/Sick-Beard.git')
+        self._run_git('config remote.origin.url git://github.com/orion1024/Sick-Beard.git')
         self._run_git('stash')
-        output, err = self._run_git('pull git://github.com/sarakha63/Sick-Beard.git '+self.branch) #@UnusedVariable
+        output, err = self._run_git('pull git://github.com/orion1024/Sick-Beard.git '+self.branch) #@UnusedVariable
 
         if not output:
             return self._git_error()
@@ -452,7 +452,7 @@ class SourceUpdateManager(GitUpdateManager):
         Downloads the latest source tarball from github and installs it over the existing version.
         """
 
-        tar_download_url = 'https://github.com/sarakha63/Sick-Beard/tarball/'+version.SICKBEARD_VERSION
+        tar_download_url = 'https://github.com/orion1024/Sick-Beard/tarball/'+version.SICKBEARD_VERSION
         sb_update_dir = os.path.join(sickbeard.PROG_DIR, 'sb-update')
         version_path = os.path.join(sickbeard.PROG_DIR, 'version.txt')
 
