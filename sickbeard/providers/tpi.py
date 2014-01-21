@@ -60,7 +60,6 @@ class TPIProvider(generic.TorrentProvider):
             results.append( urllib.urlencode( {'search': searchString, 'parent_cat' : "Séries VOSTFR", 'cat': 0, 'incldead' : 0, 'lang' : 1  } ))
             results.append( urllib.urlencode( {'search': searchString, 'parent_cat' : "Séries VOSTFR", 'cat': 0, 'incldead' : 0, 'lang' : 2  } ))
         elif audio_lang == "fr" or french:
-            results.append( urllib.urlencode( {'search': searchString, 'parent_cat' : "Séries VOSTFR", 'cat': 0, 'incldead' : 0, 'lang' : 0  } ))
             results.append( urllib.urlencode( {'search': searchString, 'parent_cat' : "Séries VF", 'cat': 0, 'incldead' : 0, 'lang' : 0  } ))
             if not fullSeason: # there is a bug in TPI search, when selecting category Series Multi the search returns single episodes torrents even when we are looking for full season.
                results.append( urllib.urlencode( {'search': searchString, 'parent_cat' : "Séries Multi", 'cat': 0, 'incldead' : 0, 'lang' : 0  } ))
