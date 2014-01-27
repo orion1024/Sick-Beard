@@ -33,7 +33,7 @@ from sickbeard import providers, metadata
 from providers import ezrss, tvtorrents, torrentleech, btn, nzbsrus, newznab, womble, nzbx, omgwtfnzbs, binnewz, t411, tpi, cpasbien, piratebay, gks, kat
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator
 
-from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, frenchFinder, autoPostProcesser, subtitles, traktWatchListChecker, SentFTPChecker
+from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, frenchFinder, autoPostProcesser, subtitles, traktWatchListChecker, SentFTPChecker, seedboxDownloader
 from sickbeard import helpers, db, exceptions, show_queue, search_queue, scheduler
 from sickbeard import logger
 from sickbeard import naming
@@ -81,6 +81,7 @@ autoTorrentPostProcesserScheduler = None
 subtitlesFinderScheduler = None
 traktWatchListCheckerSchedular = None
 sentFTPSchedular = None
+autoSeedboxDownloaderScheduler = None
 
 showList = None
 loadingShowList = None
@@ -478,7 +479,7 @@ def initialize(consoleLogging=True):
                 HOME_LAYOUT, DISPLAY_SHOW_SPECIALS, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, COMING_EPS_MISSED_RANGE, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBSNEWASOLD, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_DIR_SUB, SUBSNOLANG, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, subtitlesFinderScheduler, TOGGLE_SEARCH, \
                 SUBTITLES_CLEAN_HI, SUBTITLES_CLEAN_TEAM, SUBTITLES_CLEAN_MUSIC, SUBTITLES_CLEAN_PUNC, \
-                USE_TORRENT_FTP, FTP_HOST, FTP_LOGIN, FTP_PASSWORD, FTP_PORT, FTP_TIMEOUT, FTP_DIR, FTP_PASSIVE, sentFTPSchedular
+                USE_TORRENT_FTP, FTP_HOST, FTP_LOGIN, FTP_PASSWORD, FTP_PORT, FTP_TIMEOUT, FTP_DIR, FTP_PASSIVE, sentFTPSchedular, autoSeedboxDownloaderScheduler
 
         if __INITIALIZED__:
             return False
@@ -1027,6 +1028,7 @@ def initialize(consoleLogging=True):
                                                          threadName="NZB_POSTPROCESSER",
                                                          runImmediately=True)
 
+
         if PROCESS_AUTOMATICALLY_TORRENT:
             autoTorrentPostProcesserScheduler = scheduler.Scheduler(autoPostProcesser.PostProcesser( TORRENT_DOWNLOAD_DIR ),
                                                      cycleTime=datetime.timedelta(minutes=10),
@@ -1056,6 +1058,11 @@ def initialize(consoleLogging=True):
                                                threadName="FTP",
                                                runImmediately=False)
 
+        autoSeedboxDownloaderScheduler = scheduler.Scheduler(seedboxDownloader.SeedboxDownloader(),
+                                                         cycleTime=datetime.timedelta(minutes=2),
+                                                         threadName="SEEDBOX_DOWNLOADER",
+                                                         runImmediately=True)
+
         showList = []
         loadingShowList = {}
 
@@ -1070,7 +1077,8 @@ def start():
             frenchFinderScheduler, properFinderScheduler, autoPostProcesserScheduler, autoTorrentPostProcesserScheduler, searchQueueScheduler, \
             subtitlesFinderScheduler, started, USE_SUBTITLES, \
             traktWatchListCheckerSchedular, started, \
-            sentFTPSchedular, started
+            sentFTPSchedular, started, \
+            autoSeedboxDownloaderScheduler
 
     with INIT_LOCK:
 
@@ -1119,6 +1127,8 @@ def start():
                 logger.log("Starting FTP Thread", logger.DEBUG)
                 sentFTPSchedular.thread.start()
 
+            autoSeedboxDownloaderScheduler.thread.start()
+
             started = True
 
 def halt():
@@ -1126,7 +1136,8 @@ def halt():
     global __INITIALIZED__, currentSearchScheduler, backlogSearchScheduler, showUpdateScheduler, \
             showQueueScheduler, frenchFinderScheduler, properFinderScheduler, autoPostProcesserScheduler, autoTorrentPostProcesserScheduler, searchQueueScheduler, \
             subtitlesFinderScheduler, started, \
-            traktWatchListCheckerSchedular
+            traktWatchListCheckerSchedular, \
+            autoSeedboxDownloaderScheduler
 
     with INIT_LOCK:
 
@@ -1233,6 +1244,13 @@ def halt():
                 except:
                     pass
 
+            if autoSeedboxDownloaderScheduler:
+                autoSeedboxDownloaderScheduler.abort = True
+                logger.log(u"Waiting for the SEEDBOX_DOWNLOADER thread to exit")
+                try:
+                    autoSeedboxDownloaderScheduler.thread.join(10)
+                except:
+                    pass
 
             __INITIALIZED__ = False
 
