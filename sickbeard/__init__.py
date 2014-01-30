@@ -1059,7 +1059,7 @@ def initialize(consoleLogging=True):
                                                runImmediately=False)
 
         autoSeedboxDownloaderScheduler = scheduler.Scheduler(seedboxDownloader.SeedboxDownloader(),
-                                                         cycleTime=datetime.timedelta(minutes=2),
+                                                         cycleTime=datetime.timedelta(minutes=1),
                                                          threadName="SEEDBOX_DOWNLOADER",
                                                          runImmediately=True)
 

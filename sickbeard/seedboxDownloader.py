@@ -19,6 +19,7 @@
 import os.path
 
 import sickbeard
+from lib.pysftp import pysftp
 
 from sickbeard import logger
 
@@ -28,15 +29,19 @@ class SeedboxDownloader():
     def __init__(self, *args):
         # TODO : implement later
 
-        self.wrapper = SeedboxDownloaderProtocolWrapper(*args)
+        #self.wrapper = SeedboxDownloaderProtocolWrapper(*args)
+        self.wrapper = SeedboxDownloaderProtocolWrapper("","","","","")
+        
 
 
     def run(self):
         # TODO : implement later
         logger.log(u"Checking seedbox for files...", logger.MESSAGE)
-        logger.log(u"Not really doing anything yet", logger.MESSAGE)
+        
+        list_result = self.wrapper.list_dir()
+        logger.log(u"List dir results : " + str(list_result), logger.DEBUG)
 
-# This class is meant to hold necessary information to properly call the wrapper methods.
+# This class is meant to hold necessary information to properly call the wrapper methods.
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
 class SeedboxDownload():
     
@@ -49,65 +54,81 @@ class SeedboxDownload():
 
 
 # This class is meant to present common methods to use to download files, whatever transfer protocol is used.
-# It is used by the seedbox downloader (to list the remote files to download and populate the queue with them) and the queue itself (to actually download said files)
-# At first only SFTP will be supported, but it will make adding other protocols easier
+# It is used by the seedbox downloader (to list the remote files to download and populate the queue with them) and the queue itself (to actually download said files)
+# At first only SFTP will be supported, but it will make adding other protocols easier
 class SeedboxDownloaderProtocolWrapper():
     
-    def __init__(self, protocol, remoteHost, remoteRootDir, landingDir, remoteUser=None, remoteAuthKey=None, remotePassword=None):
+    def __init__(self, protocol, remoteHost, remotePort, remoteRootDir, landingDir, remoteUser=None, remoteAuthKey=None, remotePassword=None):
         # TODO : implement later. There should a logic to check the consistency of parameters.
         self.protocol = protocol
         self.remoteHost = remoteHost
+        self.remotePort = remotePort
         self.remoteUser = remoteUser
         self.remoteAuthKey = remoteAuthKey
         self.remotePassword = remotePassword
         self.remoteRootDir = remoteRootDir
         self.landingDir = landingDir
 
+        # TODO : There should a logic to check the consistency of parameters.
         self.validConfiguration = True
 
-    def list_dir(self, remoteDir, recursive=False)
+        #if self.protocol=="SFTP"
+            #self.SFTPConnection = pysftp.Connection(remoteHost, remoteUser, remoteAuthKey, remotePassword, remotePort, log = True)
+        self.sftp = pysftp.Connection("localhost", "sftp", password="p59kN85vTaqnkGoEJsgt", log = True)
+
+
+
+    def list_dir(self, remoteDir=".", recursive=False):
         # TODO : implement later
         results = []
+ 
+        return self.sftp.listdir()
 
-        return results
-
-    def get_file(self, remoteDir, fileName)
+    def get_file(self, remoteDir, fileName):
         # TODO : implement later. Should return True or False whether download successfully completed or not
 
         return True
 
-    def get_dir(self, remoteDir, recurse=False)
+    def get_dir(self, remoteDir, recurse=False):
          # TODO : implement later. Same as get_file but for all files in specified directory
 
         return True
 
-    def is_file_downloaded(self, remoteDir, fileName)
+    def is_file_downloaded(self, remoteDir, fileName):
         # TODO : implement later. Should return True or False whether the file is present locally, and with the same size as the remote version.
 
         return True
 
-    def is_dir_downloaded(self, remoteDir, recurse=False)
+    def is_dir_downloaded(self, remoteDir, recurse=False):
         # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
 
         return True
 
-    def get_file_progress(self, remoteDir, fileName)
+    def get_file_progress(self, remoteDir, fileName):
         # TODO : implement later. Should return, for a file currently being downloaded, the % of completion. Not sure if possible though ?
 
         return 0
 
-    def is_dir_downloaded(self, remoteDir, recurse=False)
+    def is_dir_downloaded(self, remoteDir, recurse=False):
         # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
 
         return True
 
-
-    def delete_file(self, remoteDir, fileName)
+    def delete_file(self, remoteDir, fileName):
         # TODO : implement later. Should return True or False whether the file deletion successfully completed or not
 
         return True
 
-    def delete_dir(self, remoteDir, recurse=False)
-         # TODO : implement later. Same as delete_file but for all files in specified directory
+    def delete_dir(self, remoteDir, recurse=False):
+        # TODO : implement later. Same as delete_file but for all files in specified directory
+         
+        return True
 
+    def connect(self):
+        # TODO : implement later. This function should be called only internally if necessary, not by outside code. Objective is to keep the internal workings hidden from calling objects.
+        return True
+
+    def disconnect(self):
+        # TODO : implement later. This function should be called only internally if necessary,, not by outside code. Objective is to keep the internal workings hidden from calling objects.
+        return True
 
