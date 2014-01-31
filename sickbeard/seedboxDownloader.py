@@ -45,12 +45,18 @@ class SeedboxDownloader():
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
 class SeedboxDownload():
     
-    def __init__(self, remoteDir, fileName):
+    def __init__(self, filePath, fileSize=0):
         # TODO : implement later
-        self.remoteDir = remoteDir
-        self.fileName = fileName
-        
+        self.filePath = filePath
+        self.fileSize = fileSize
+        self.transferredSize = 0
+        self.fileChecked = False
 
+    def __str__(self):
+        return u"(filePath="+str(self.filePath)+";fileSize="+str(self.fileSize)+";transferredSize="+str(self.transferredSize)+";fileChecked="+str(self.fileChecked)+")"
+        
+    def __repr__(self):
+        return self.__str__()
 
 
 # This class is meant to present common methods to use to download files, whatever transfer protocol is used.
@@ -58,8 +64,8 @@ class SeedboxDownload():
 # At first only SFTP will be supported, but it will make adding other protocols easier
 class SeedboxDownloaderProtocolWrapper():
     
-    def __init__(self, protocol, remoteHost, remotePort, remoteRootDir, landingDir, remoteUser=None, remoteAuthKey=None, remotePassword=None):
-        # TODO : implement later. There should a logic to check the consistency of parameters.
+    def __init__(self, protocol, remoteHost, remotePort, landingDir, remoteRootDir="", remoteUser=None, remoteAuthKey=None, remotePassword=None):
+        # TODO : implement later. There should be a logic to check the consistency of parameters.
         self.protocol = protocol
         self.remoteHost = remoteHost
         self.remotePort = remotePort
@@ -78,11 +84,22 @@ class SeedboxDownloaderProtocolWrapper():
 
 
 
-    def list_dir(self, remoteDir=".", recursive=False):
+    def list_dir(self, remoteDir="", recursive=False):
         # TODO : implement later
         results = []
- 
-        return self.sftp.listdir()
+        
+        remote_filenames = self.sftp.listdir()
+        
+        
+        logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
+        
+        for remote_filename in remote_filenames:
+            logger.log(u"Getting stats for file " + str(remote_filename), logger.DEBUG)
+            attr = self.sftp.stat(remote_filename)
+            logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
+            results.append(SeedboxDownload(remote_filename, attr.st_size))
+        
+        return results
 
     def get_file(self, remoteDir, fileName):
         # TODO : implement later. Should return True or False whether download successfully completed or not
