@@ -52,8 +52,8 @@ class SeedboxDownloader():
         
         logger.log(u"Got %d results. Computing stats..." % len(self.downloads), logger.INFO)
         
-        self.wrapper.checkAlreadyPresentDownloads(self.downloads)
-        self.updateDownloadStats()
+        self.wrapper.check_already_present_downloads(self.downloads)
+        self.update_download_stats()
         
         logger.log(u"Total files : %d (%d MB)" % (self.totalFiles,self.totalBytes/1024/1024), logger.INFO)
         logger.log(u"Total downloaded files : %d (%d MB)" % (self.totalDownloadedFiles,self.totalDownloadedBytes/1024/1024), logger.INFO)
@@ -64,7 +64,7 @@ class SeedboxDownloader():
         #    logger.log(str(download), logger.DEBUG)
 
     # Computes stats about all downloads : total size, number of downloaded files, downloaded bytes until now...
-    def updateDownloadStats(self):
+    def update_download_stats(self):
         # TODO : implement later
         
         self.totalFiles = 0
@@ -114,7 +114,7 @@ class SeedboxDownload():
         self.fileDownloading = False
     
     # This method is meant to be passed as the callback method during transfer
-    def updateDownloadProgress(self, transferredBytes, fileSize):
+    def update_download_progress(self, transferredBytes, fileSize):
         # TODO : check it is working
         self.fileSize = fileSize
         self.transferredBytes = transferredBytes
@@ -187,7 +187,7 @@ class SeedboxDownloaderProtocolWrapper():
  
         return results
 
-    def checkAlreadyPresentDownloads(self, downloads):
+    def check_already_present_downloads(self, downloads):
         
         for download in downloads:
             download.fileAlreadyPresent = self.is_file_downloaded(download.remoteFilePath, download.localFilePath)
