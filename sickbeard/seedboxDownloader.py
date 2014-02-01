@@ -17,6 +17,9 @@
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import stat
+import sys
+import re
 
 import sickbeard
 from lib.pysftp import pysftp
@@ -38,8 +41,12 @@ class SeedboxDownloader():
         # TODO : implement later
         logger.log(u"Checking seedbox for files...", logger.MESSAGE)
         
-        list_result = self.wrapper.list_dir()
-        logger.log(u"List dir results : " + str(list_result), logger.DEBUG)
+        downloads = self.wrapper.list_dir(recursive=True)   
+        
+        logger.log(u"Got %d results :" % len(downloads), logger.DEBUG)
+        for download in downloads:
+            logger.log(str(download), logger.DEBUG)
+
 
 # This class is meant to hold necessary information about a remote file to properly call the wrapper methods.
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
@@ -89,25 +96,38 @@ class SeedboxDownloaderProtocolWrapper():
 
 
 
-    def list_dir(self, remoteDir="", recursive=False):
+    def list_dir(self, remoteDir=".", recursive=False):
         # TODO : implement later
         results = []
         
-        remote_filepaths = self.sftp.listdir()
+        remote_filepaths = self.sftp.listdir(remoteDir)
         
         
         logger.log(u"List dir results (raw) : " + str(remote_filepaths), logger.DEBUG)
         
         for remote_filepath in remote_filepaths:
-            #logger.log(u"Getting stats for file " + str(remote_filepath), logger.DEBUG)
-            attr = self.sftp.stat(remote_filepath)
-            #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
-            #Building local path out of the remote dir, the remote path and the landing directory.
-            logger.log(u"Building local path... remoteRootDir = <" + str(self.remoteRootDir) + u">, remoteFilePath = <" + str(remote_filepath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
-            localFilePath = os.path.normpath(self.landingDir + "/" + remote_filepath.replace(self.remoteRootDir + "/",""))
-            logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
-            results.append(SeedboxDownload(remote_filepath, localFilePath, attr.st_size))
-        
+            remoteFullPath = remoteDir + "/" + remote_filepath
+            #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
+            
+            try:
+                attr = self.sftp.stat(remoteFullPath)
+            except IOError as IOexception:
+                logger.log(u"IO error: %s" % IOexception, logger.DEBUG)
+            else:
+                # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
+                if stat.S_ISDIR(attr.st_mode):
+                    if recursive:
+                        results.extend(self.list_dir(remoteFullPath, True))
+                else:
+                    # Building local path out of the remote dir, the remote path and the landing directory.
+                    
+                    #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
+                    #logger.log(u"Building local path... remoteRootDir = <" + str(self.remoteRootDir) + u">, remoteFilePath = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
+                    
+                    localFilePath = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remoteRootDir + "/"),"",1))
+                    #logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
+                    results.append(SeedboxDownload(remoteFullPath, localFilePath, attr.st_size))
+ 
         return results
 
     def get_file(self, download_obj):
