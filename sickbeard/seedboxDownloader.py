@@ -30,7 +30,7 @@ class SeedboxDownloader():
         # TODO : implement later
 
         #self.wrapper = SeedboxDownloaderProtocolWrapper(*args)
-        self.wrapper = SeedboxDownloaderProtocolWrapper("","","","","")
+        self.wrapper = SeedboxDownloaderProtocolWrapper("SFTP","localhost","","/home/orion1024/Documents/landing_dev",remoteUser="sftp", remotePassword="p59kN85vTaqnkGoEJsgt")
         
 
 
@@ -41,19 +41,25 @@ class SeedboxDownloader():
         list_result = self.wrapper.list_dir()
         logger.log(u"List dir results : " + str(list_result), logger.DEBUG)
 
-# This class is meant to hold necessary information to properly call the wrapper methods.
+# This class is meant to hold necessary information about a remote file to properly call the wrapper methods.
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
 class SeedboxDownload():
     
-    def __init__(self, filePath, fileSize=0):
+    def __init__(self, remoteFilePath, localFilePath, fileSize=0):
         # TODO : implement later
-        self.filePath = filePath
+        self.remoteFilePath = remoteFilePath
+        self.localFilePath= localFilePath
         self.fileSize = fileSize
-        self.transferredSize = 0
+        self.transferredBytes = 0
         self.fileChecked = False
+    
+    # This method is meant to be passed as the callback method during transfer
+    def updateDownloadProgress(transferredBytes, fileSize):
+        self.fileSize = fileSize
+        self.transferredBytes = transferredBytes
 
     def __str__(self):
-        return u"(filePath="+str(self.filePath)+";fileSize="+str(self.fileSize)+";transferredSize="+str(self.transferredSize)+";fileChecked="+str(self.fileChecked)+")"
+        return u"(remoteFilePath="+str(self.remoteFilePath)+";localFilePath="+str(self.localFilePath)+";fileSize="+str(self.fileSize)+";transferredSize="+str(self.transferredBytes)+";fileChecked="+str(self.fileChecked)+")"
         
     def __repr__(self):
         return self.__str__()
@@ -78,9 +84,8 @@ class SeedboxDownloaderProtocolWrapper():
         # TODO : There should a logic to check the consistency of parameters.
         self.validConfiguration = True
 
-        #if self.protocol=="SFTP"
-            #self.SFTPConnection = pysftp.Connection(remoteHost, remoteUser, remoteAuthKey, remotePassword, remotePort, log = True)
-        self.sftp = pysftp.Connection("localhost", "sftp", password="p59kN85vTaqnkGoEJsgt", log = True)
+        if self.protocol=="SFTP":
+            self.sftp = pysftp.Connection(self.remoteHost, self.remoteUser, password=self.remotePassword, log = True)
 
 
 
@@ -88,21 +93,28 @@ class SeedboxDownloaderProtocolWrapper():
         # TODO : implement later
         results = []
         
-        remote_filenames = self.sftp.listdir()
+        remote_filepaths = self.sftp.listdir()
         
         
-        logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
+        logger.log(u"List dir results (raw) : " + str(remote_filepaths), logger.DEBUG)
         
-        for remote_filename in remote_filenames:
-            logger.log(u"Getting stats for file " + str(remote_filename), logger.DEBUG)
-            attr = self.sftp.stat(remote_filename)
-            logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
-            results.append(SeedboxDownload(remote_filename, attr.st_size))
+        for remote_filepath in remote_filepaths:
+            #logger.log(u"Getting stats for file " + str(remote_filepath), logger.DEBUG)
+            attr = self.sftp.stat(remote_filepath)
+            #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
+            #Building local path out of the remote dir, the remote path and the landing directory.
+            logger.log(u"Building local path... remoteRootDir = <" + str(self.remoteRootDir) + u">, remoteFilePath = <" + str(remote_filepath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
+            localFilePath = os.path.normpath(self.landingDir + "/" + remote_filepath.replace(self.remoteRootDir + "/",""))
+            logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
+            results.append(SeedboxDownload(remote_filepath, localFilePath, attr.st_size))
         
         return results
 
-    def get_file(self, remoteDir, fileName):
+    def get_file(self, download_obj):
         # TODO : implement later. Should return True or False whether download successfully completed or not
+        
+        # Building
+        #if os.path.exists(
 
         return True
 
@@ -111,20 +123,10 @@ class SeedboxDownloaderProtocolWrapper():
 
         return True
 
-    def is_file_downloaded(self, remoteDir, fileName):
+    def is_file_downloaded(self, download_obj):
         # TODO : implement later. Should return True or False whether the file is present locally, and with the same size as the remote version.
 
         return True
-
-    def is_dir_downloaded(self, remoteDir, recurse=False):
-        # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
-
-        return True
-
-    def get_file_progress(self, remoteDir, fileName):
-        # TODO : implement later. Should return, for a file currently being downloaded, the % of completion. Not sure if possible though ?
-
-        return 0
 
     def is_dir_downloaded(self, remoteDir, recurse=False):
         # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
