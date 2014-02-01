@@ -26,6 +26,7 @@ from lib.pysftp import pysftp
 
 from sickbeard import logger
 
+
 # This class will populate the download queue, primarily by using the protocol wrapper to list remote files to be downloaded.
 class SeedboxDownloader():
     
@@ -42,26 +43,47 @@ class SeedboxDownloader():
         self.totalFilesToDownload = 0
         self.totalDownloadedBytes = 0
         self.totalBytesToDownload = 0
+        
+        # temp until queue is implemented
+        self.downloading = False
 
 
     def run(self):
         # TODO : implement later
         logger.log(u"Checking seedbox for files...", logger.MESSAGE)
         
-        self.downloads = self.wrapper.list_dir(recursive=True)   
+        # temp until queue is implemented       
+        if not self.downloading:
         
-        logger.log(u"Got %d results. Computing stats..." % len(self.downloads), logger.INFO)
+            self.downloading = True
+            self.downloads = self.wrapper.list_dir(recursive=True)   
+            
+            logger.log(u"Got %d results. Computing stats..." % len(self.downloads), logger.MESSAGE)
+            
+            self.wrapper.check_already_present_downloads(self.downloads)
+            self.update_download_stats()
+            
+            self.logDownloadStats()   
+
+            # temp until queue is implemented
+            
+            if self.totalFilesToDownload > 0:    
+                for download in self.downloads:
+                    if not download.fileAlreadyPresent:
+                        logger.log(u"Starting download for %s ..." % download.Name, logger.MESSAGE)
+                        result = self.wrapper.get_file(download)
+                        if download.fileDownloaded:
+                            logger.log(u"%s successfully downloaded !" % download.Name, logger.MESSAGE)
+                        else:
+                            logger.log(u"%s not downloaded for some reason. Check your connection settings !" % download.Name, logger.MESSAGE)
+                self.update_download_stats()                            
+                self.logDownloadStats()
+            else:
+                logger.log(u"No files to download.", logger.MESSAGE)
+                
+            self.downloading = False
         
-        self.wrapper.check_already_present_downloads(self.downloads)
-        self.update_download_stats()
-        
-        logger.log(u"Total files : %d (%d MB)" % (self.totalFiles,self.totalBytes/1024/1024), logger.INFO)
-        logger.log(u"Total downloaded files : %d (%d MB)" % (self.totalDownloadedFiles,self.totalDownloadedBytes/1024/1024), logger.INFO)
-        logger.log(u"Total files already present : %d (%d MB)" % (self.totalAlreadyPresentFiles,self.totalAlreadyPresentBytes/1024/1024), logger.INFO)
-        logger.log(u"Total files to download : %d (%d MB)" % (self.totalFilesToDownload,self.totalBytesToDownload/1024/1024), logger.INFO)        
-        
-        #for download in downloads:
-        #    logger.log(str(download), logger.DEBUG)
+        return          
 
     # Computes stats about all downloads : total size, number of downloaded files, downloaded bytes until now...
     def update_download_stats(self):
@@ -99,25 +121,39 @@ class SeedboxDownloader():
         
         return
 
+    # Logs stats to Sickbeard log file : total size, number of downloaded files, downloaded bytes until now...
+    def logDownloadStats(self):
+        # TODO : complete later
+        logger.log(u"Total files : %d (%d MB)" % (self.totalFiles,self.totalBytes/1024/1024), logger.MESSAGE)
+        logger.log(u"Total downloaded files : %d (%d MB)" % (self.totalDownloadedFiles,self.totalDownloadedBytes/1024/1024), logger.MESSAGE)
+        logger.log(u"Total files already present : %d (%d MB)" % (self.totalAlreadyPresentFiles,self.totalAlreadyPresentBytes/1024/1024), logger.MESSAGE)
+        logger.log(u"Total files to download : %d (%d MB)" % (self.totalFilesToDownload,self.totalBytesToDownload/1024/1024), logger.MESSAGE)
+        
+        return 
+
 # This class is meant to hold necessary information about a remote file to properly call the wrapper methods.
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
 class SeedboxDownload():
     
-    def __init__(self, remoteFilePath, localFilePath, fileSize=0, fileAlreadyPresent=False):
-        # TODO : implement later
+    def __init__(self, remoteFilePath, localFilePath, remoteName, protocolWrapper, fileSize=0, fileAlreadyPresent=False):
+
         self.remoteFilePath = remoteFilePath
         self.localFilePath= localFilePath
         self.fileSize = fileSize
+        self.Name = remoteName
+        self.protocolWrapper = protocolWrapper
+        self.fileAlreadyPresent = fileAlreadyPresent
         self.transferredBytes = 0
         self.fileDownloaded = False
-        self.fileAlreadyPresent = fileAlreadyPresent
         self.fileDownloading = False
+
     
-    # This method is meant to be passed as the callback method during transfer
-    def update_download_progress(self, transferredBytes, fileSize):
-        # TODO : check it is working
+    # This method is meant to be passed to the wrapper as the callback method during transfer
+    def update_download_progress(self, transferredBytes, fileSize):       
         self.fileSize = fileSize
         self.transferredBytes = transferredBytes
+        
+        return
 
     def __str__(self):
         return u"(remoteFilePath="+str(self.remoteFilePath)+";localFilePath="+str(self.localFilePath)+";fileSize="+str(self.fileSize)+";transferredSize="+str(self.transferredBytes)+";fileDownloaded="+str(self.fileDownloaded)+")"
@@ -142,7 +178,7 @@ class SeedboxDownloaderProtocolWrapper():
         self.remoteRootDir = remoteRootDir
         self.landingDir = landingDir
 
-        # TODO : There should a logic to check the consistency of parameters.
+        # TODO : There should a logic to check the consistency of parameters AND the fact that we can actually connect.
         self.validConfiguration = True
 
         if self.protocol=="SFTP":
@@ -154,13 +190,13 @@ class SeedboxDownloaderProtocolWrapper():
         
         if self.protocol=="SFTP":
         
-            remote_filepaths = self.sftp.listdir(remoteDir)
+            remote_filenames = self.sftp.listdir(remoteDir)
             
             
-            #logger.log(u"List dir results (raw) : " + str(remote_filepaths), logger.DEBUG)
+            #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
             
-            for remote_filepath in remote_filepaths:
-                remoteFullPath = remoteDir + "/" + remote_filepath
+            for remote_filename in remote_filenames:
+                remoteFullPath = remoteDir + "/" + remote_filename
                 #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
                 
                 try:
@@ -183,7 +219,7 @@ class SeedboxDownloaderProtocolWrapper():
                         localFilePath = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remoteRootDir + "/"),"",1))
                         #logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
                         
-                        results.append(SeedboxDownload(remoteFullPath, localFilePath, attr.st_size))
+                        results.append(SeedboxDownload(remoteFullPath, localFilePath, remote_filename, self, attr.st_size))
  
         return results
 
@@ -194,13 +230,51 @@ class SeedboxDownloaderProtocolWrapper():
             
         return
     
-    def get_file(self, download_obj):
-        # TODO : implement later. Should return True or False whether download successfully completed or not
+    def get_file(self, download):
+        # TODO : implement later. Should return True or False whether download successfully completed or not.
         
-        # Building
-        #if os.path.exists(
+        if not self.validConfiguration:
+            return False
 
-        return True
+        # Checking local conditions before starting the transfer.
+        if self.is_file_downloaded(download.remoteFilePath, download.localFilePath):
+            download.fileAlreadyPresent=True
+            return False
+        
+        # if the file exists and is_file_downloaded returned False, this means a partial download.
+        if os.path.exists(download.localFilePath):
+            if self.protocol=="SFTP":
+                # SFTP client doesn't handle resume so we need to remove the partially downloaded file
+                try:
+                    os.remove(download.localFilePath)
+                except:
+                    logger.log(u"Exception when trying to remove %s. Exception : %s" % (download.localFilePath, IOexception), logger.DEBUG)
+                    return False
+            else:
+                pass
+        
+        # If local directory does not exist we create it
+        localDirectory = os.path.dirname(download.localFilePath)
+        if not os.path.exists(localDirectory):
+            try:
+                os.makedirs(localDirectory)
+            except:
+                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (localDirectory, IOexception), logger.DEBUG)
+                return False
+        
+        # OK, now we can start downloading
+        download.fileDownloading = True
+        self.sftp.get(download.remoteFilePath, download.localFilePath, download.update_download_progress)
+        download.fileDownloading = False
+        
+        if self.is_file_downloaded(download.remoteFilePath, download.localFilePath):
+            download.fileDownloaded = True
+            return True
+        else:
+            download.fileDownloaded = False
+            return False
+
+        return False
 
     def get_dir(self, remoteDir, recurse=False):
          # TODO : implement later. Same as get_file but for all files in specified directory
@@ -241,3 +315,11 @@ class SeedboxDownloaderProtocolWrapper():
         # TODO : implement later. This function should be called only internally if necessary,, not by outside code. Objective is to keep the internal workings hidden from calling objects.
         return True
 
+# Helper method. Prints a value in Byte in a human readable way (ie 14 MG/GB whatever)
+# Credits to Fred Cicera : http://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
+def printBytes(num):
+    for x in ['bytes','KB','MB','GB']:
+        if num < 1024.0 and num > -1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+    return "%3.1f %s" % (num, 'TB')
