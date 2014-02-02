@@ -42,6 +42,11 @@ class SeedboxDownload():
         self.transferredBytes = 0
         self.fileDownloaded = False
         self.fileDownloading = False
+        
+        # if the file download fails, this variable will be set to True
+        self.fileDownloadFailed = False
+        # if the file download fails, this variable will be set to the exception message returned.
+        self.fileDownloadError = ""
 
     
     # This method is meant to be passed to the wrapper as the callback method during transfer
@@ -52,8 +57,19 @@ class SeedboxDownload():
 
     # This method is meant to be called by the download queue when file needs to be downloaded.
     def download(self):
-        return self.protocolWrapper.get_file(self)
-
+        self.fileDownloadFailed = False
+        result = False
+        try:
+            result = self.protocolWrapper.get_file(self)
+        except IOError as IOException:
+            logger.log(u"Error when trying to get remote file %s : %s" % (self.remoteFilePath, IOException), logger.DEBUG)
+            self.fileDownloadFailed = True
+            self.fileDownloadError = str(IOException)
+            return False
+        finally:
+            return result
+            
+            
     # This method is meant to be called by the download queue when file needs to be removed at the remote location.
     def removeRemoteVersion(self):
         return self.protocolWrapper.delete_file(self.remoteFilePath)
@@ -107,36 +123,39 @@ class SeedboxDownloaderProtocolWrapper():
                     remoteDir =  self.remoteRootDir
             
             #logger.log(u"Getting content of remote directory %s ..." % remoteDir, logger.DEBUG)
-            remote_filenames = self.sftp.listdir(remoteDir)
+            try:
+                remote_filenames = self.sftp.listdir(remoteDir)
+            except IOError as IOexception:
+                logger.log(u"Error while listing directory %s (%s)" % (remoteDir, IOexception), logger.DEBUG)
+            else:
             
-            
-            #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
-            
-            for remote_filename in remote_filenames:
-                remoteFullPath = remoteDir + "/" + remote_filename
-                #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
+                #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
                 
-                try:
-                    attr = self.sftp.stat(remoteFullPath)
-                except IOError as IOexception:
-                    logger.log(u"IO error: %s" % IOexception, logger.DEBUG)
-                else:
-                    # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
-                    if stat.S_ISDIR(attr.st_mode):
-                        if recursive:
-                            results.extend(self.list_dir(queueProtocolWrapper, remoteFullPath, True, True))
+                for remote_filename in remote_filenames:
+                    remoteFullPath = remoteDir + "/" + remote_filename
+                    #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
+                    
+                    try:
+                        attr = self.sftp.stat(remoteFullPath)
+                    except IOError as IOexception:
+                        logger.log(u"Error while getting file info for %s (%s)" % (remoteFullPath, IOexception), logger.DEBUG)
+                    else:
+                        # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
+                        if stat.S_ISDIR(attr.st_mode):
+                            if recursive:
+                                results.extend(self.list_dir(queueProtocolWrapper, remoteFullPath, True, True))
+                                
+                        # Also checking that the file is a regular one.
+                        elif stat.S_ISREG(attr.st_mode):
+                            # Building local path out of the remote dir, the remote path and the landing directory.
                             
-                    # Also checking that the file is a regular one.
-                    elif stat.S_ISREG(attr.st_mode):
-                        # Building local path out of the remote dir, the remote path and the landing directory.
-                        
-                        #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
-                        #logger.log(u"Building local path... remoteRootDir = <" + str(self.remoteRootDir) + u">, remoteFilePath = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
-                        
-                        localFilePath = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remoteRootDir)+ "/","",1))
-                        #logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
-                        
-                        results.append(SeedboxDownload(remoteFullPath, localFilePath, remote_filename, queueProtocolWrapper, attr.st_size))
+                            #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
+                            #logger.log(u"Building local path... remoteRootDir = <" + str(self.remoteRootDir) + u">, remoteFilePath = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
+                            
+                            localFilePath = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remoteRootDir)+ "/","",1))
+                            #logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
+                            
+                            results.append(SeedboxDownload(remoteFullPath, localFilePath, remote_filename, queueProtocolWrapper, attr.st_size))
  
         return results
 
@@ -148,7 +167,6 @@ class SeedboxDownloaderProtocolWrapper():
         return
     
     def get_file(self, download):
-        # TODO : implement later. Should return True or False whether download successfully completed or not.
         
         if not self.validConfiguration:
             return False
@@ -186,12 +204,10 @@ class SeedboxDownloaderProtocolWrapper():
         
         if self.is_file_downloaded(download.remoteFilePath, download.localFilePath):
             download.fileDownloaded = True
-            return True
         else:
             download.fileDownloaded = False
-            return False
 
-        return False
+        return download.fileDownloaded
 
     def get_dir(self, remoteDir, recurse=False):
          # TODO : implement later. Same as get_file but for all files in specified directory

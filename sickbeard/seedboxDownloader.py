@@ -73,13 +73,18 @@ class SeedboxDownloader():
         self.discoverProtocolWrapper.check_already_present_downloads(newDownloads)
        
         # TODO : remove this line later when testing is over.
+        for download in self.downloads:
+            if download.fileDownloadFailed:
+                logger.log(u"Failed download : %s (%s)" % (download.Name, download.fileDownloadError), logger.MESSAGE)
+
+        # TODO : remove this line later when testing is over.
         self.downloads = []
         
         self.addNewDownloads(newDownloads)
         
         self.update_download_stats()
         self.logDownloadStats()
-    
+            
         return          
 
     # Add new downloads if it isn't already in the list, to the internal list AND to the queue.

@@ -79,8 +79,7 @@ class DownloadQueueItem(generic_queue.QueueItem):
 
     def execute(self):
         generic_queue.QueueItem.execute(self)
-
-        # TODO : implement later
+        
         logger.log("Downloading from seedbox : %s" % self.download_obj.Name, logger.DEBUG)
         
         self.success = None
@@ -95,8 +94,9 @@ class DownloadQueueItem(generic_queue.QueueItem):
         
         logger.log("Finishing download from seedbox : %s with status %s" % (self.download_obj.Name, self.success), logger.DEBUG)
         
-        # TODO : logic to move the file to sickbeard post process directory if transfer is a success
-        # TODO : logic to remove remote file if this is the configuration
+        # TODO : move the file to sickbeard post process directory if transfer is a success
+        # TODO : remove remote directory if empty. Here or somewhere else ?
+        # TODO : better handling of exceptions to allow retries. At least update the download object with the exception information
         
         if self.removeRemoteOnSuccess and self.success:
             logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download_obj.remoteFilePath), logger.DEBUG)
@@ -105,7 +105,7 @@ class DownloadQueueItem(generic_queue.QueueItem):
                     logger.log("Remove completed successfully for file %s" % (self.download_obj.remoteFilePath), logger.DEBUG)
             except IOError as IOException:
                 logger.log(u"IO exception when trying to remove remote file %s : %s" % (self.download_obj.remoteFilePath, str(IOException)), logger.DEBUG)
-                return               
+                return              
             except:
                 logger.log(u"Unknown exception when trying to remove remote file %s. Exception : %s" % (self.download_obj.remoteFilePath, str(sys.exc_type)), logger.DEBUG)
                 return
