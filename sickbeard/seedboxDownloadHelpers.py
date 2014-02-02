@@ -165,7 +165,7 @@ class SeedboxDownloaderProtocolWrapper():
                 try:
                     os.remove(download.localFilePath)
                 except:
-                    logger.log(u"Exception when trying to remove %s. Exception : %s" % (download.localFilePath, IOexception), logger.DEBUG)
+                    logger.log(u"Exception when trying to remove %s. Exception : %s" % (download.localFilePath, sys.exc_type), logger.DEBUG)
                     return False
             else:
                 pass
@@ -176,7 +176,7 @@ class SeedboxDownloaderProtocolWrapper():
             try:
                 os.makedirs(localDirectory)
             except:
-                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (localDirectory, IOexception), logger.DEBUG)
+                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (localDirectory, sys.exc_type), logger.DEBUG)
                 return False
         
         # OK, now we can start downloading

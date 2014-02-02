@@ -20,6 +20,7 @@ from __future__ import with_statement
 
 import datetime
 import time
+import sys
 
 import sickbeard
 from sickbeard import db, logger, common, exceptions, helpers
@@ -100,11 +101,14 @@ class DownloadQueueItem(generic_queue.QueueItem):
         if self.removeRemoteOnSuccess and self.success:
             logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download_obj.remoteFilePath), logger.DEBUG)
             try:
-                if download_obj.removeRemoteVersion():
+                if self.download_obj.removeRemoteVersion():
                     logger.log("Remove completed successfully for file %s" % (self.download_obj.remoteFilePath), logger.DEBUG)
+            except IOError as IOException:
+                logger.log(u"IO exception when trying to remove remote file %s : %s" % (self.download_obj.remoteFilePath, str(IOException)), logger.DEBUG)
+                return               
             except:
-                logger.log(u"Exception when trying to remove remote file %s. Exception : %s" % (self.download_obj.remoteFilePath, IOexception), logger.DEBUG)
-                return False
+                logger.log(u"Unknown exception when trying to remove remote file %s. Exception : %s" % (self.download_obj.remoteFilePath, str(sys.exc_type)), logger.DEBUG)
+                return
 
 
 

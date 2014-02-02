@@ -48,7 +48,7 @@ class SeedboxDownloader():
         self.queueProtocolWrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper("SFTP","localhost","",
                                                                 "/home/orion1024/Documents/landing_dev", remoteRootDir="myremotedir",
                                                                 remoteUser="sftp", remotePassword="p59kN85vTaqnkGoEJsgt")
-        self.removeRemoteFilesOnSuccess = False 
+        self.removeRemoteFilesOnSuccess = True 
         
 
         self.downloads = []
