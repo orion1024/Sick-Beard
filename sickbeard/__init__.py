@@ -82,6 +82,7 @@ subtitlesFinderScheduler = None
 traktWatchListCheckerSchedular = None
 sentFTPSchedular = None
 autoSeedboxDownloaderScheduler = None
+seedboxDownloadQueueScheduler = None
 
 showList = None
 loadingShowList = None
@@ -479,7 +480,8 @@ def initialize(consoleLogging=True):
                 HOME_LAYOUT, DISPLAY_SHOW_SPECIALS, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, COMING_EPS_MISSED_RANGE, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBSNEWASOLD, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_DIR_SUB, SUBSNOLANG, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, subtitlesFinderScheduler, TOGGLE_SEARCH, \
                 SUBTITLES_CLEAN_HI, SUBTITLES_CLEAN_TEAM, SUBTITLES_CLEAN_MUSIC, SUBTITLES_CLEAN_PUNC, \
-                USE_TORRENT_FTP, FTP_HOST, FTP_LOGIN, FTP_PASSWORD, FTP_PORT, FTP_TIMEOUT, FTP_DIR, FTP_PASSIVE, sentFTPSchedular, autoSeedboxDownloaderScheduler
+                USE_TORRENT_FTP, FTP_HOST, FTP_LOGIN, FTP_PASSWORD, FTP_PORT, FTP_TIMEOUT, FTP_DIR, FTP_PASSIVE, sentFTPSchedular, \
+                autoSeedboxDownloaderScheduler, seedboxDownloadQueueScheduler
 
         if __INITIALIZED__:
             return False
@@ -1062,6 +1064,11 @@ def initialize(consoleLogging=True):
                                                          cycleTime=datetime.timedelta(minutes=1),
                                                          threadName="SEEDBOX_DOWNLOADER",
                                                          runImmediately=True)
+        
+        seedboxDownloadQueueScheduler = scheduler.Scheduler(autoSeedboxDownloaderScheduler.action.downloadQueue,
+                                                                 cycleTime=datetime.timedelta(seconds=3),
+                                                                 threadName="SEEDBOX_DOWNLOAD_QUEUE",
+                                                                 runImmediately=True)
 
         showList = []
         loadingShowList = {}
@@ -1078,7 +1085,7 @@ def start():
             subtitlesFinderScheduler, started, USE_SUBTITLES, \
             traktWatchListCheckerSchedular, started, \
             sentFTPSchedular, started, \
-            autoSeedboxDownloaderScheduler
+            autoSeedboxDownloaderScheduler, seedboxDownloadQueueScheduler
 
     with INIT_LOCK:
 
@@ -1128,6 +1135,8 @@ def start():
                 sentFTPSchedular.thread.start()
 
             autoSeedboxDownloaderScheduler.thread.start()
+            
+            seedboxDownloadQueueScheduler.thread.start()
 
             started = True
 
@@ -1137,7 +1146,7 @@ def halt():
             showQueueScheduler, frenchFinderScheduler, properFinderScheduler, autoPostProcesserScheduler, autoTorrentPostProcesserScheduler, searchQueueScheduler, \
             subtitlesFinderScheduler, started, \
             traktWatchListCheckerSchedular, \
-            autoSeedboxDownloaderScheduler
+            autoSeedboxDownloaderScheduler, seedboxDownloadQueueScheduler
 
     with INIT_LOCK:
 
@@ -1249,6 +1258,14 @@ def halt():
                 logger.log(u"Waiting for the SEEDBOX_DOWNLOADER thread to exit")
                 try:
                     autoSeedboxDownloaderScheduler.thread.join(10)
+                except:
+                    pass
+
+            if seedboxDownloadQueueScheduler:
+                seedboxDownloadQueueScheduler.abort = True
+                logger.log(u"Waiting for the SEEDBOX_DOWNLOAD_QUEUE thread to exit")
+                try:
+                    seedboxDownloadQueueScheduler.thread.join(10)
                 except:
                     pass
 

@@ -26,7 +26,8 @@ from sickbeard import db, logger, common, exceptions, helpers
 from sickbeard import generic_queue
 #from sickbeard import search
 #from sickbeard import ui
-
+import seedboxDownloadHelpers
+from seedboxDownloadHelpers import printBytes
 
 class SeedboxDownloadQueue(generic_queue.GenericQueue):
     
@@ -34,11 +35,11 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
         generic_queue.GenericQueue.__init__(self)
         self.queue_name = "SEEDBOXDOWNLOADQUEUE"
 
-    def is_in_queue(self, download):
+    def is_in_queue(self, item):
         # TODO : implement later
-        # for cur_item in self.queue:
-        #     if isinstance(cur_item, DownloadQueueItem) and cur_item.show == show and cur_item.segment == segment:
-        #        return True
+        for cur_item in self.queue:
+             if isinstance(cur_item, DownloadQueueItem) and cur_item.download_obj.Name == item.download_obj.Name:
+                return True
         return False
 
     def pause_download(self):
@@ -60,18 +61,18 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
     def add_item(self, item):
         # TODO : implement later
         # don't do duplicates
-        if isinstance(item, BacklogQueueItem) and not self.is_in_queue(item):
+        if isinstance(item, DownloadQueueItem) and not self.is_in_queue(item):
             generic_queue.GenericQueue.add_item(self, item)
         else:
-            logger.log(u"Not adding item, it's already in the queue", logger.DEBUG)
+            logger.log(u"Not adding item, it's already in the queue or not the right type of object.", logger.DEBUG)
 
 class DownloadQueueItem(generic_queue.QueueItem):
-    def __init__(self, download_obj):
-        generic_queue.QueueItem.__init__(self, 'Seedbox download', MANUAL_SEARCH)
+    def __init__(self, download_obj, removeRemoteOnSuccess=False):
+        generic_queue.QueueItem.__init__(self, 'Seedbox download')
         self.priority = generic_queue.QueuePriorities.NORMAL
-
-        # TODO : implement later        
+       
         self.download_obj = download_obj
+        self.removeRemoteOnSuccess = removeRemoteOnSuccess
      
         self.success = None
 
@@ -79,15 +80,35 @@ class DownloadQueueItem(generic_queue.QueueItem):
         generic_queue.QueueItem.execute(self)
 
         # TODO : implement later
-        logger.log("Downloading from seedbox : " + self.download_obj.Name)
+        logger.log("Downloading from seedbox : %s" % self.download_obj.Name, logger.DEBUG)
+        
+        self.success = None
+        self.success = self.download_obj.download()
 
-
-        self.success = result
 
     def finish(self):
-        # TODO : implement later
         # don't let this linger if something goes wrong
         if self.success == None:
             self.success = False
         generic_queue.QueueItem.finish(self)
+        
+        logger.log("Finishing download from seedbox : %s with status %s" % (self.download_obj.Name, self.success), logger.DEBUG)
+        
+        # TODO : logic to move the file to sickbeard post process directory if transfer is a success
+        # TODO : logic to remove remote file if this is the configuration
+        
+        if self.removeRemoteOnSuccess and self.success:
+            logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download_obj.remoteFilePath), logger.DEBUG)
+            try:
+                if download_obj.removeRemoteVersion():
+                    logger.log("Remove completed successfully for file %s" % (self.download_obj.remoteFilePath), logger.DEBUG)
+            except:
+                logger.log(u"Exception when trying to remove remote file %s. Exception : %s" % (self.download_obj.remoteFilePath, IOexception), logger.DEBUG)
+                return False
 
+
+
+
+
+
+      
