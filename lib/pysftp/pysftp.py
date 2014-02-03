@@ -154,6 +154,11 @@ class Connection(object):
         self._sftp_connect()
         self._sftp.remove(remotepath)
 
+    def rmdir(self, remotepath):
+        """Remove a directory in the remote host."""
+        self._sftp_connect()
+        self._sftp.rmdir(remotepath)
+        
     def rename(self, oldpath, newpath):
         """Rename a file in the remote host."""
         self._sftp_connect()
