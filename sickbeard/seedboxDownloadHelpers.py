@@ -49,30 +49,11 @@ class SeedboxDownload():
         self.fileDownloadError = ""
 
     
-    # This method is meant to be passed to the wrapper as the callback method during transfer
+    # This method is meant to be passed to the wrapper as the callback method during transfers
     def update_download_progress(self, transferredBytes, fileSize):       
         self.fileSize = fileSize
         self.transferredBytes = transferredBytes
         return
-
-    # This method is meant to be called by the download queue when file needs to be downloaded.
-    def download(self):
-        self.fileDownloadFailed = False
-        result = False
-        try:
-            result = self.protocolWrapper.get_file(self)
-        except IOError as IOException:
-            logger.log(u"Error when trying to get remote file %s : %s" % (self.remoteFilePath, IOException), logger.DEBUG)
-            self.fileDownloadFailed = True
-            self.fileDownloadError = str(IOException)
-            return False
-        finally:
-            return result
-            
-            
-    # This method is meant to be called by the download queue when file needs to be removed at the remote location.
-    def removeRemoteVersion(self):
-        return self.protocolWrapper.delete_file(self.remoteFilePath)
 
     def __str__(self):
         return u"(remoteFilePath="+str(self.remoteFilePath)+";localFilePath="+str(self.localFilePath)+";fileSize="+str(self.fileSize)+";transferredSize="+str(self.transferredBytes)+";fileDownloaded="+str(self.fileDownloaded)+")"
@@ -199,14 +180,19 @@ class SeedboxDownloaderProtocolWrapper():
         
         # OK, now we can start downloading
         download.fileDownloading = True
-        self.sftp.get(download.remoteFilePath, download.localFilePath, download.update_download_progress)
-        download.fileDownloading = False
-        
-        if self.is_file_downloaded(download.remoteFilePath, download.localFilePath):
-            download.fileDownloaded = True
-        else:
+        download.fileDownloadFailed = False
+        try:
+            self.sftp.get(download.remoteFilePath, download.localFilePath, download.update_download_progress)
+        except IOError as IOException:
+            logger.log(u"Error when trying to get remote file %s : %s" % (download.remoteFilePath, IOException), logger.DEBUG)
+            download.fileDownloadFailed = True
+            download.fileDownloadError = str(IOException)
             download.fileDownloaded = False
-
+        else:
+            download.fileDownloaded = self.is_file_downloaded(download.remoteFilePath, download.localFilePath)
+        finally:
+            download.fileDownloading = False
+        
         return download.fileDownloaded
 
     def get_dir(self, remoteDir, recurse=False):
@@ -250,10 +236,45 @@ class SeedboxDownloaderProtocolWrapper():
             
         return False
 
-    def delete_dir(self, remoteDir, recurse=False):
-        # TODO : implement later. Same as delete_file but for all files in specified directory
-         
-        return True
+    # Returns False if directory is empty and remove attempt failed. Returns True otherwise (ie, if directory is not empty or it not a directory, nothing is done and method returns True
+    def delete_empty_dir(self, remoteDir, recurse=False):
+        
+        if remoteDir == self.remoteRootDir:
+            logger.log("Not removing %s since it is the configured remote root directory." % remoteDir, logger.DEBUG)
+            return True
+        else:
+            try:
+                if self.sftp.exists(remoteDir):
+                    attr = self.sftp.stat(remoteDir)
+                    if stat.S_ISDIR(attr.st_mode):
+                        fileList = self.sftp.listdir(remoteDir)
+                        if len(fileList) == 0:
+                            logger.log("Removing remote empty directory %s" % remoteDir, logger.DEBUG)
+                            self.sftp.rmdir(remoteDir)
+                            
+                            # If the remove was successful and this is a recursive remove, we now try to remove the parent directory.
+                            if not self.sftp.exists(remoteDir):
+                                if recurse:
+                                    return self.delete_empty_dir(os.path.dirname(remoteDir), True)
+                                else:
+                                    return True 
+                            else:
+                                return False
+                        else:
+                            logger.log("Remote directory %s not empty : %d file(s) found." % (remoteDir, len(fileList)), logger.DEBUG)
+                            return False
+                    else:
+                        logger.log("%s is not a directory. Not removing it." % (remoteDir), logger.DEBUG)
+                        return False
+                else:
+                    return False
+            except IOError as IOException:
+                logger.log(u"Error when trying to remove remote directory %s : %s" % (remoteDir, str(IOException)), logger.DEBUG)
+                return False           
+            except:
+                logger.log(u"Unexpected error when trying to remove remote directory %s. Exception : %s" % (remoteDir, str(sys.exc_type)), logger.DEBUG)
+                return False
+
 
     def connect(self):
         # TODO : implement later. This function should be called only internally if necessary, not by outside code. Objective is to keep the internal workings hidden from calling objects.

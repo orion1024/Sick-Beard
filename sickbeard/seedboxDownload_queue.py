@@ -21,6 +21,7 @@ from __future__ import with_statement
 import datetime
 import time
 import sys
+import os
 
 import sickbeard
 from sickbeard import db, logger, common, exceptions, helpers
@@ -37,9 +38,8 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
         self.queue_name = "SEEDBOXDOWNLOADQUEUE"
 
     def is_in_queue(self, item):
-        # TODO : implement later
         for cur_item in self.queue:
-             if isinstance(cur_item, DownloadQueueItem) and cur_item.download_obj.Name == item.download_obj.Name:
+             if isinstance(cur_item, DownloadQueueItem) and cur_item.download.remoteFilePath == item.download.remoteFilePath:
                 return True
         return False
 
@@ -60,7 +60,6 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
         return False
 
     def add_item(self, item):
-        # TODO : implement later
         # don't do duplicates
         if isinstance(item, DownloadQueueItem) and not self.is_in_queue(item):
             generic_queue.GenericQueue.add_item(self, item)
@@ -68,11 +67,12 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
             logger.log(u"Not adding item, it's already in the queue or not the right type of object.", logger.DEBUG)
 
 class DownloadQueueItem(generic_queue.QueueItem):
-    def __init__(self, download_obj, removeRemoteOnSuccess=False):
+    def __init__(self, download, protocolWrapper, removeRemoteOnSuccess=False):
         generic_queue.QueueItem.__init__(self, 'Seedbox download')
         self.priority = generic_queue.QueuePriorities.NORMAL
        
-        self.download_obj = download_obj
+        self.download = download
+        self.protocolWrapper = protocolWrapper
         self.removeRemoteOnSuccess = removeRemoteOnSuccess
      
         self.success = None
@@ -80,10 +80,13 @@ class DownloadQueueItem(generic_queue.QueueItem):
     def execute(self):
         generic_queue.QueueItem.execute(self)
         
-        logger.log("Downloading from seedbox : %s" % self.download_obj.Name, logger.DEBUG)
+        logger.log("Downloading from seedbox : %s" % self.download.Name, logger.DEBUG)
         
         self.success = None
-        self.success = self.download_obj.download()
+        
+        self.download.fileDownloadFailed = False
+        
+        self.success = self.protocolWrapper.get_file(self.download)
 
 
     def finish(self):
@@ -92,23 +95,26 @@ class DownloadQueueItem(generic_queue.QueueItem):
             self.success = False
         generic_queue.QueueItem.finish(self)
         
-        logger.log("Finishing download from seedbox : %s with status %s" % (self.download_obj.Name, self.success), logger.DEBUG)
+        logger.log("Finishing download from seedbox : %s with status %s" % (self.download.Name, self.success), logger.DEBUG)
         
         # TODO : move the file to sickbeard post process directory if transfer is a success
-        # TODO : remove remote directory if empty. Here or somewhere else ?
-        # TODO : better handling of exceptions to allow retries. At least update the download object with the exception information
-        
+        # TODO NEXT : remove remote directory if empty. Here or somewhere else ?
+     
         if self.removeRemoteOnSuccess and self.success:
-            logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download_obj.remoteFilePath), logger.DEBUG)
-            try:
-                if self.download_obj.removeRemoteVersion():
-                    logger.log("Remove completed successfully for file %s" % (self.download_obj.remoteFilePath), logger.DEBUG)
+            logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remoteFilePath), logger.DEBUG)
+            try:                
+                removeSuccessful = self.protocolWrapper.delete_file(self.download.remoteFilePath)
             except IOError as IOException:
-                logger.log(u"IO exception when trying to remove remote file %s : %s" % (self.download_obj.remoteFilePath, str(IOException)), logger.DEBUG)
+                logger.log(u"Error when trying to remove remote file %s : %s" % (self.download.remoteFilePath, str(IOException)), logger.DEBUG)
                 return              
             except:
-                logger.log(u"Unknown exception when trying to remove remote file %s. Exception : %s" % (self.download_obj.remoteFilePath, str(sys.exc_type)), logger.DEBUG)
+                logger.log(u"Unexpected error when trying to remove remote file %s. Exception : %s" % (self.download.remoteFilePath, str(sys.exc_type)), logger.DEBUG)
                 return
+            else:
+                if removeSuccessful:
+                    logger.log("Remove completed successfully for file %s" % (self.download.remoteFilePath), logger.DEBUG)
+                    # We also try to remove the parent directories. They will be removed only if empty, and we stop at the remote root directory.
+                    self.protocolWrapper.delete_empty_dir(os.path.dirname(self.download.remoteFilePath), recurse=True)  
 
 
 

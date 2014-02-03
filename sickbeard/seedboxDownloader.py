@@ -95,7 +95,7 @@ class SeedboxDownloader():
             if not self.isDownloadKnown(newDownload):
                 self.downloads.append(newDownload)
                 if not newDownload.fileAlreadyPresent:
-                    self.downloadQueue.add_item(seedboxDownload_queue.DownloadQueueItem(newDownload, self.removeRemoteFilesOnSuccess))
+                    self.downloadQueue.add_item(seedboxDownload_queue.DownloadQueueItem(newDownload, self.queueProtocolWrapper, self.removeRemoteFilesOnSuccess))
                     newDownloadCount += 1
                     
         logger.log(u"%d new files to download." % newDownloadCount, logger.MESSAGE)
