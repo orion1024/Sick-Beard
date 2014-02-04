@@ -415,6 +415,21 @@ FTP_TIMEOUT = 120
 FTP_DIR = ''
 FTP_PASSIVE = False
 
+SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = 30
+SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = True
+SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = True
+SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = False
+SEEDBOX_DOWNLOAD_LANDING_DIR = ''
+SEEDBOX_DOWNLOAD_PROTOCOL = "SFTP"
+SEEDBOX_DOWNLOAD_SFTP_HOST = ''
+SEEDBOX_DOWNLOAD_SFTP_PORT = 22
+SEEDBOX_DOWNLOAD_SFTP_USERNAME = ''
+SEEDBOX_DOWNLOAD_SFTP_USE_CERT = True
+SEEDBOX_DOWNLOAD_SFTP_CERT_FILE = ''
+SEEDBOX_DOWNLOAD_SFTP_PASSWORD = ''
+SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR = ''
+
+
 DISPLAY_POSTERS = None
 TOGGLE_SEARCH = False
 
@@ -481,7 +496,11 @@ def initialize(consoleLogging=True):
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBSNEWASOLD, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_DIR_SUB, SUBSNOLANG, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, subtitlesFinderScheduler, TOGGLE_SEARCH, \
                 SUBTITLES_CLEAN_HI, SUBTITLES_CLEAN_TEAM, SUBTITLES_CLEAN_MUSIC, SUBTITLES_CLEAN_PUNC, \
                 USE_TORRENT_FTP, FTP_HOST, FTP_LOGIN, FTP_PASSWORD, FTP_PORT, FTP_TIMEOUT, FTP_DIR, FTP_PASSIVE, sentFTPSchedular, \
-                autoSeedboxDownloaderScheduler, seedboxDownloadQueueScheduler
+                autoSeedboxDownloaderScheduler, seedboxDownloadQueueScheduler, \
+                SEEDBOX_DOWNLOAD_CHECK_FREQUENCY, SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES, SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR, \
+                SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY, SEEDBOX_DOWNLOAD_LANDING_DIR, SEEDBOX_DOWNLOAD_PROTOCOL, \
+                SEEDBOX_DOWNLOAD_SFTP_HOST, SEEDBOX_DOWNLOAD_SFTP_PORT, SEEDBOX_DOWNLOAD_SFTP_USERNAME, \
+                SEEDBOX_DOWNLOAD_SFTP_USE_CERT, SEEDBOX_DOWNLOAD_SFTP_CERT_FILE, SEEDBOX_DOWNLOAD_SFTP_PASSWORD, SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
 
         if __INITIALIZED__:
             return False
@@ -961,7 +980,22 @@ def initialize(consoleLogging=True):
         FTP_TIMEOUT = check_setting_int(CFG, 'FTP', 'ftp_timeout', 120)
         FTP_DIR = check_setting_str(CFG, 'FTP', 'ftp_remotedir', '')
         FTP_PASSIVE = bool(check_setting_int(CFG, 'FTP', 'ftp_passive', 1))
-
+        
+        CheckSection(CFG, 'SEEDBOXDOWNLOAD')
+        SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'check_frequency', 30)
+        SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = bool(check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'delete_remote_files', 1))
+        SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = bool(check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'download_episodes_only', 1))
+        SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = bool(check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'automove_in_postprocess_dir', 0))
+        SEEDBOX_DOWNLOAD_LANDING_DIR = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'landing_dir', '')
+        SEEDBOX_DOWNLOAD_PROTOCOL = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'protocol', "SFTP")
+        SEEDBOX_DOWNLOAD_SFTP_HOST = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'sftp_host', '')
+        SEEDBOX_DOWNLOAD_SFTP_PORT = check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'sftp_port', 22)
+        SEEDBOX_DOWNLOAD_SFTP_USERNAME = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'sftp_username', '')
+        SEEDBOX_DOWNLOAD_SFTP_USE_CERT = bool(check_setting_int(CFG, 'SEEDBOXDOWNLOAD', 'sftp_use_cert', 1))
+        SEEDBOX_DOWNLOAD_SFTP_CERT_FILE = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'sftp_cert_file', '')
+        SEEDBOX_DOWNLOAD_SFTP_PASSWORD = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'sftp_password', '')
+        SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR = check_setting_str(CFG, 'SEEDBOXDOWNLOAD', 'sftp_remote_root_dir', '')
+        
         # start up all the threads
         logger.sb_log_instance.initLogging(consoleLogging=consoleLogging)
 
@@ -1716,7 +1750,24 @@ def save_config():
     new_config['FTP']['ftp_timeout'] = int(FTP_TIMEOUT)
     new_config['FTP']['ftp_remotedir'] = FTP_DIR
     new_config['FTP']['ftp_passive'] = int(FTP_PASSIVE)
+    
+    new_config['SEEDBOXDOWNLOAD'] = {}
+    new_config['SEEDBOXDOWNLOAD']['check_frequency'] = SEEDBOX_DOWNLOAD_CHECK_FREQUENCY
+    new_config['SEEDBOXDOWNLOAD']['delete_remote_files'] = SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES
+    new_config['SEEDBOXDOWNLOAD']['download_episodes_only'] = SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY
+    new_config['SEEDBOXDOWNLOAD']['automove_in_postprocess_dir'] = SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR
+    new_config['SEEDBOXDOWNLOAD']['landing_dir'] = SEEDBOX_DOWNLOAD_LANDING_DIR
+    new_config['SEEDBOXDOWNLOAD']['protocol'] = SEEDBOX_DOWNLOAD_PROTOCOL
+    new_config['SEEDBOXDOWNLOAD']['sftp_host'] = SEEDBOX_DOWNLOAD_SFTP_HOST
+    new_config['SEEDBOXDOWNLOAD']['sftp_port'] = SEEDBOX_DOWNLOAD_SFTP_PORT
+    new_config['SEEDBOXDOWNLOAD']['sftp_username'] = SEEDBOX_DOWNLOAD_SFTP_USERNAME
+    new_config['SEEDBOXDOWNLOAD']['sftp_use_cert'] = SEEDBOX_DOWNLOAD_SFTP_USE_CERT
+    new_config['SEEDBOXDOWNLOAD']['sftp_cert_file'] = SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+    new_config['SEEDBOXDOWNLOAD']['sftp_password'] = SEEDBOX_DOWNLOAD_SFTP_PASSWORD
+    new_config['SEEDBOXDOWNLOAD']['sftp_remote_root_dir'] = SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
 
+   
+    
     new_config['General']['config_version'] = CONFIG_VERSION
 
     new_config.write()
