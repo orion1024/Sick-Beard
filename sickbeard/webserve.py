@@ -835,6 +835,7 @@ ConfigMenu = [
     { 'title': 'Search Providers',  'path': 'config/providers/'        },
     { 'title': 'Subtitles Settings','path': 'config/subtitles/'        },
     { 'title': 'Post Processing',   'path': 'config/postProcessing/'   },
+    { 'title': 'Seedbox Download',   'path': 'config/seedboxdownload/'   },
     { 'title': 'Notifications',     'path': 'config/notifications/'    },
 ]
 
@@ -1486,6 +1487,15 @@ class ConfigProviders:
 
         redirect("/config/providers/")
 
+class ConfigSeedboxDownload:
+
+    @cherrypy.expose
+    def index(self):
+
+        t = PageTemplate(file="config_seedboxdownload.tmpl")
+        t.submenu = ConfigMenu
+        return _munge(t)
+
 
 class ConfigNotifications:
 
@@ -2092,6 +2102,8 @@ class Config:
     notifications = ConfigNotifications()
 
     subtitles = ConfigSubtitles()
+    
+    seedboxdownload = ConfigSeedboxDownload()
 
 def haveXBMC():
     return sickbeard.USE_XBMC and sickbeard.XBMC_UPDATE_LIBRARY
