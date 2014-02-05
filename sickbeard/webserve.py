@@ -1495,7 +1495,62 @@ class ConfigSeedboxDownload:
         t = PageTemplate(file="config_seedboxdownload.tmpl")
         t.submenu = ConfigMenu
         return _munge(t)
+        
+        
+    @cherrypy.expose
+    def saveSeedboxDownload (self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
+                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None ):
+        
+        logger.log(u"Entering saveSeedboxDownload...", logger.DEBUG)
+            
+        results= []
+        
+        if seedboxdownload_enabled == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_ENABLED = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_ENABLED = 0
+            
+        if seedboxdownload_delete_remote_files == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = 0
+            
+        if seedboxdownload_automove_in_postprocess_dir == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = 0
+            
+        if seedboxdownload_download_episodes_only == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = 0
+            
+        try:
+            sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = seedboxdownload_check_frequency
+        except ValueError:
+            results.append("Invalid value for the check frequency, setting is unchanged.")
+        
+        if os.path.isdir(seedboxdownload_landing_dir):
+            sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR = seedboxdownload_landing_dir
+        else:
+            results.append("Landing directory does not exists, setting is unchanged.")
+   
+       
+        logger.log(u"Now saving seedbox settings...", logger.DEBUG)
+ 
+        sickbeard.save_config()
+        
+        logger.log(u"Logging %d errors..." % len(results), logger.DEBUG)
+        
+        if len(results) > 0:
+            for x in results:
+                logger.log(x, logger.ERROR)
+            ui.notifications.error('Error(s) Saving Configuration',
+                        '<br />\n'.join(results))
+        else:
+            ui.notifications.message('Configuration Saved', ek.ek(os.path.join, sickbeard.CONFIG_FILE) )
 
+        redirect("/config/seedboxdownload/")
 
 class ConfigNotifications:
 

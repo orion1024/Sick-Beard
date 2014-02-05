@@ -31,7 +31,9 @@
             <div id="config-components">
                 <ul>
                 	<li><a href="#core-component-group1">General Settings</a></li>
+                	<!--
                 	<li><a href="#core-component-group2">Configure Transfer Protocol</a></li>
+                	//-->
                 </ul>
                 
                 <div id="core-component-group1" class="component-group clearfix">
@@ -96,7 +98,7 @@
 
                     </fieldset>
                 </div><!-- /component-group1 //-->
-
+<!-- 
                 <div id="core-component-group2" class="component-group clearfix">
 
                     <div class="component-group-desc">
@@ -266,65 +268,8 @@ Nothing to set up for this provider
                     </fieldset>
                 </div><!-- /component-group2 //-->
 
-#if $sickbeard.USE_NZBS
-                <div id="core-component-group3" class="component-group clearfix">
 
-                    <div class="component-group-desc">
-                        <h3>Configure Custom<br />Newznab Providers</h3>
-                        <p>Add and setup custom Newznab providers.</p>
-                        <p>Some built-in Newznab providers are already available above.</p>
-                    </div>
-
-                    <fieldset class="component-group-list">
-                        <div class="field-pair">
-                            <label class="clearfix">
-                                <span class="component-title jumbo">Select Provider:</span>
-                                <span class="component-desc">
-                                    <input type="hidden" name="newznab_string" id="newznab_string" />
-                                    <select id="editANewznabProvider">
-                                        <option value="addNewznab">-- add new provider --</option>
-                                    </select>
-                                </span>
-                            </label>
-                        </div>
-
-<div class="newznabProviderDiv" id="addNewznab">
-                        <div class="field-pair">
-                            <label class="nocheck clearfix">
-                                <span class="component-title">Provider Name</span>
-                                <input class="component-desc" type="text" id="newznab_name" size="40" />
-                            </label>
-                        </div>
-                        <div class="field-pair">
-                            <label class="nocheck clearfix">
-                                <span class="component-title">Site URL</span>
-                                <input class="component-desc" type="text" id="newznab_url" size="40" />
-                            </label>
-                        </div>
-                        <div class="field-pair">
-                            <label class="nocheck clearfix">
-                                <span class="component-title">API Key</span>
-                                <input class="component-desc" type="text" id="newznab_key" size="40" />
-                            </label>
-                            <label class="nocheck clearfix">
-                                <span class="component-title">&nbsp;</span>
-                                <span class="component-desc">(leave blank if not required)</span>
-                            </label>
-                        </div>
-            <div id="newznab_add_div">
-                <input class="btn" type="button" class="newznab_save" id="newznab_add" value="Add" />
-            </div>
-            <div id="newznab_update_div" style="display: none;">
-                <input class="btn btn-danger newznab_delete" type="button" class="newznab_delete" id="newznab_delete" value="Delete" />
-            </div> 
-</div>
-
-                    </fieldset>
-                </div><!-- /component-group3 //-->
-#end if
-                    
-            <br/><input type="submit" class="btn config_submitter" value="Save Changes" /><br/>
-                
+       //-->         
             </div><!-- /config-components //-->
 
 </form>
