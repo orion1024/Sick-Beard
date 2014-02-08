@@ -1499,7 +1499,9 @@ class ConfigSeedboxDownload:
         
     @cherrypy.expose
     def saveSeedboxDownload (self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
-                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None ):
+                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None ):
+
+        #seedboxdownload_delete_remote_files=on&seedboxdownload_check_frequency=30&seedboxdownload_landing_dir=
         
         logger.log(u"Entering saveSeedboxDownload...", logger.DEBUG)
             
@@ -1526,11 +1528,11 @@ class ConfigSeedboxDownload:
             sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = 0
             
         try:
-            sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = seedboxdownload_check_frequency
+            sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = int(seedboxdownload_check_frequency)
         except ValueError:
             results.append("Invalid value for the check frequency, setting is unchanged.")
         
-        if os.path.isdir(seedboxdownload_landing_dir):
+        if seedboxdownload_landing_dir and os.path.isdir(seedboxdownload_landing_dir):
             sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR = seedboxdownload_landing_dir
         else:
             results.append("Landing directory does not exists, setting is unchanged.")
