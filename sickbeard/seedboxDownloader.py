@@ -66,7 +66,7 @@ class SeedboxDownloader():
     def run(self):
         logger.log(u"Checking seedbox for files...", logger.MESSAGE)
            
-        newDownloads = self.discoverProtocolWrapper.list_dir(self.queueProtocolWrapper, recursive=True)   
+        newDownloads = self.discoverProtocolWrapper.list_dir(recursive=True)   
         
         logger.log(u"Got %d results. Computing stats..." % len(newDownloads), logger.MESSAGE)
         

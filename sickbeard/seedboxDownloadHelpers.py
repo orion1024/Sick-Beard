@@ -27,17 +27,38 @@ from lib.pysftp import pysftp
 
 from sickbeard import logger
 
+# This class holds all settings related to the module. Whether it's enabled, to delete remote files, etc.
+# All general settings are kept as properties, all protocol-specific settings are kept as an object of type SeedboxDownloaderProtocolWrapperSettings
+# This allows to pass a setting object to the wrapper, without giving it all settings.
+def SeedboxDownloaderSettings():
+    def __init__(self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
+                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None):
+        # TODO : to be implemented
+        
+        
+        self.protocolSettings = SeedboxDownloaderProtocolWrapperSettings()
+    
+        return
+        
+# This class holds all settings related to the protocol wrapper. Kept separated from 
+def SeedboxDownloaderProtocolWrapperSettings():
+    def __init__(self):
+        # TODO : to be implemented
+    
+        return
+        
+
+
 # This class is meant to hold necessary information about a remote file to properly call the wrapper methods.
 # The downloader will build these objects and supply them to the queue items so that the files get downloaded.
 class SeedboxDownload():
     
-    def __init__(self, remoteFilePath, localFilePath, remoteName, protocolWrapper, fileSize=0, fileAlreadyPresent=False):
+    def __init__(self, remoteFilePath, localFilePath, remoteName, fileSize=0, fileAlreadyPresent=False):
 
         self.remoteFilePath = remoteFilePath
         self.localFilePath= localFilePath
         self.fileSize = fileSize
         self.Name = remoteName
-        self.protocolWrapper = protocolWrapper
         self.fileAlreadyPresent = fileAlreadyPresent
         self.transferredBytes = 0
         self.fileDownloaded = False
@@ -85,7 +106,7 @@ class SeedboxDownloaderProtocolWrapper():
             self.sftp = pysftp.Connection(self.remoteHost, self.remoteUser, password=self.remotePassword, log = True)
 
     # List all files in the given directory, and return a list of SeedBoxDownload objects. The files are tested for local existence in here too.
-    def list_dir(self, queueProtocolWrapper, remoteSubDir="", recursive=False, recursiveCall=False):
+    def list_dir(self, remoteSubDir="", recursive=False, recursiveCall=False):
         results = []
         
        
@@ -124,7 +145,7 @@ class SeedboxDownloaderProtocolWrapper():
                         # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
                         if stat.S_ISDIR(attr.st_mode):
                             if recursive:
-                                results.extend(self.list_dir(queueProtocolWrapper, remoteFullPath, True, True))
+                                results.extend(self.list_dir(remoteFullPath, True, True))
                                 
                         # Also checking that the file is a regular one.
                         elif stat.S_ISREG(attr.st_mode):
@@ -136,7 +157,7 @@ class SeedboxDownloaderProtocolWrapper():
                             localFilePath = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remoteRootDir)+ "/","",1))
                             #logger.log(u"LocalPath = <" + str(localFilePath) + u">", logger.DEBUG)
                             
-                            results.append(SeedboxDownload(remoteFullPath, localFilePath, remote_filename, queueProtocolWrapper, attr.st_size))
+                            results.append(SeedboxDownload(remoteFullPath, localFilePath, remote_filename, attr.st_size))
  
         return results
 
