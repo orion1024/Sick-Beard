@@ -31,22 +31,53 @@ from sickbeard import logger
 # All general settings are kept as properties, all protocol-specific settings are kept as an object of type SeedboxDownloaderProtocolWrapperSettings
 # This allows to pass a setting object to the wrapper, without giving it all settings.
 def SeedboxDownloaderSettings():
-    def __init__(self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
-                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None):
-        # TODO : to be implemented
+    def __init__(self, enabled, delete_remote_files, automove_in_postprocess_dir,
+                    check_frequency, landing_dir, download_episodes_only,
+                    protocol, sftp_remote_host=None, sftp_remote_port=22,
+                    sftp_landing_dir=None, sftp_remote_root_dir=".", sftp_remote_user=None,
+                    sftp_remote_auth_key=None, sftp_remote_password=None):
         
-        
-        self.protocolSettings = SeedboxDownloaderProtocolWrapperSettings()
-    
+        self.enabled = enabled
+        self.delete_remote_files = delete_remote_files
+        self.automove_in_postprocess_dir = automove_in_postprocess_dir
+        self.check_frequency = check_frequency
+        self.landing_dir = landing_dir
+        self.download_episodes_only = download_episodes_only
+
+        self.protocol_settings = SeedboxDownloaderProtocolWrapperSettings(
+                                            protocol, sftp_remote_host, sftp_remote_port,
+                                            sftp_landing_dir, sftp_remote_root_dir,
+                                            sftp_remote_user, sftp_remote_auth_key,
+                                            sftp_remote_password)
+                                                
         return
         
-# This class holds all settings related to the protocol wrapper. Kept separated from 
+    def validate_settings(self):
+        # TODO : to be coded
+        return self.protocol_settings.validate_setings()
+        
+        
+# This class holds all settings related to the protocol wrapper.
+# Kept separated from the general settings as it will passed on to the wrapper object and it doesn't care about general settings.
 def SeedboxDownloaderProtocolWrapperSettings():
-    def __init__(self):
-        # TODO : to be implemented
-    
+
+    def __init__(self, protocol, sftp_remote_host=None, sftp_remote_port=22,
+                    sftp_landing_dir=None, sftp_remote_root_dir=".", sftp_remote_user=None, sftp_remote_auth_key=None, sftp_remote_password=None):
+
+        self.protocol = protocol
+        self.sftp_remote_host = sftp_remote_host
+        self.sftp_remote_port = sftp_remote_port
+        self.sftp_remote_user = sftp_remote_user
+        self.sftp_remote_auth_key = sftp_remote_auth_key
+        self.sftp_remote_password = sftp_remote_password
+        self.sftp_remote_root_dir = sftp_remote_root_dir
+        self.sftp_landing_dir = sftp_landing_dir
+        
         return
         
+    def validate_settings(self):
+        # TODO : to be coded
+        return True
 
 
 # This class is meant to hold necessary information about a remote file to properly call the wrapper methods.
