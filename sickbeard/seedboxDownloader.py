@@ -41,13 +41,13 @@ class SeedboxDownloader():
         
         #self.discoverProtocolWrapper = SeedboxDownloaderProtocolWrapper(*args)
         self.discoverProtocolWrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper("SFTP","localhost","",
-                                                                "/home/orion1024/Documents/landing_dev", remoteRootDir="myremotedir",
-                                                                remoteUser="sftp", remotePassword="p59kN85vTaqnkGoEJsgt")
+                                                                "/home/orion1024/Documents/landing_dev", remote_root_dir="myremotedir",
+                                                                remote_user="sftp", remote_password="p59kN85vTaqnkGoEJsgt")
         # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
         # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
         self.queueProtocolWrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper("SFTP","localhost","",
-                                                                "/home/orion1024/Documents/landing_dev", remoteRootDir="myremotedir",
-                                                                remoteUser="sftp", remotePassword="p59kN85vTaqnkGoEJsgt")
+                                                                "/home/orion1024/Documents/landing_dev", remote_root_dir="myremotedir",
+                                                                remote_user="sftp", remote_password="p59kN85vTaqnkGoEJsgt")
         self.removeRemoteFilesOnSuccess = True 
         
 
@@ -74,27 +74,27 @@ class SeedboxDownloader():
        
         # TODO : remove this line later when testing is over.
         for download in self.downloads:
-            if download.fileDownloadFailed:
-                logger.log(u"Failed download : %s (%s)" % (download.Name, download.fileDownloadError), logger.MESSAGE)
+            if download.file_download_failed:
+                logger.log(u"Failed download : %s (%s)" % (download.Name, download.file_download_error), logger.MESSAGE)
 
         # TODO : remove this line later when testing is over.
         self.downloads = []
         
-        self.addNewDownloads(newDownloads)
+        self.add_new_downloads(newDownloads)
         
         self.update_download_stats()
-        self.logDownloadStats()
+        self.log_download_stats()
             
         return          
 
     # Add new downloads if it isn't already in the list, to the internal list AND to the queue.
-    def addNewDownloads(self, newDownloads):
+    def add_new_downloads(self, newDownloads):
         
         newDownloadCount = 0
         for newDownload in newDownloads:
             if not self.isDownloadKnown(newDownload):
                 self.downloads.append(newDownload)
-                if not newDownload.fileAlreadyPresent:
+                if not newDownload.file_already_present:
                     self.downloadQueue.add_item(seedboxDownload_queue.DownloadQueueItem(newDownload, self.queueProtocolWrapper, self.removeRemoteFilesOnSuccess))
                     newDownloadCount += 1
                     
@@ -105,7 +105,7 @@ class SeedboxDownloader():
     def isDownloadKnown(self, newDownload):
     
         for download in self.downloads:
-            if download.remoteFilePath == newDownload.remoteFilePath:
+            if download.remote_file_path == newDownload.remote_file_path:
                 return True
         
         return False
@@ -126,28 +126,28 @@ class SeedboxDownloader():
         
         for download in self.downloads:
             self.totalFiles += 1
-            self.totalBytes += download.fileSize
+            self.totalBytes += download.file_size
  
             # A file is either downloaded (implicitely in this session), already present (previously downloaded), or in the queue          
-            if download.fileDownloaded:
+            if download.file_downloaded:
                 self.totalDownloadedFiles += 1
-                self.totalDownloadedBytes += download.fileSize
-            elif download.fileAlreadyPresent:
+                self.totalDownloadedBytes += download.file_size
+            elif download.file_already_present:
                 self.totalAlreadyPresentFiles += 1
-                self.totalAlreadyPresentBytes += download.fileSize  
+                self.totalAlreadyPresentBytes += download.file_size  
             else:
                 self.totalFilesToDownload += 1
-                # If file is currently downloading, we take the transferredBytes into account
-                if download.fileDownloading:
-                    self.totalBytesToDownload += download.fileSize - download.transferredBytes
-                    self.totalDownloadedBytes += download.transferredBytes
+                # If file is currently downloading, we take the transferred_bytes into account
+                if download.file_downloading:
+                    self.totalBytesToDownload += download.file_size - download.transferred_bytes
+                    self.totalDownloadedBytes += download.transferred_bytes
                 else:
-                    self.totalBytesToDownload += download.fileSize   
+                    self.totalBytesToDownload += download.file_size   
         
         return
 
     # Logs stats to Sickbeard log file : total size, number of downloaded files, downloaded bytes until now...
-    def logDownloadStats(self):
+    def log_download_stats(self):
         # TODO : complete later
         logger.log(u"Total files : %d (%s)" % (self.totalFiles,printBytes(self.totalBytes)), logger.MESSAGE)
         logger.log(u"Total downloaded files : %d (%s)" % (self.totalDownloadedFiles,printBytes(self.totalDownloadedBytes)), logger.MESSAGE)

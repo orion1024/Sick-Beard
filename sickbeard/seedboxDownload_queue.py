@@ -39,7 +39,7 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
 
     def is_in_queue(self, item):
         for cur_item in self.queue:
-             if isinstance(cur_item, DownloadQueueItem) and cur_item.download.remoteFilePath == item.download.remoteFilePath:
+             if isinstance(cur_item, DownloadQueueItem) and cur_item.download.remote_file_path == item.download.remote_file_path:
                 return True
         return False
 
@@ -84,7 +84,7 @@ class DownloadQueueItem(generic_queue.QueueItem):
         
         self.success = None
         
-        self.download.fileDownloadFailed = False
+        self.download.file_download_failed = False
         
         self.success = self.protocolWrapper.get_file(self.download)
 
@@ -101,20 +101,20 @@ class DownloadQueueItem(generic_queue.QueueItem):
         # TODO NEXT : remove remote directory if empty. Here or somewhere else ?
      
         if self.removeRemoteOnSuccess and self.success:
-            logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remoteFilePath), logger.DEBUG)
+            logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remote_file_path), logger.DEBUG)
             try:                
-                removeSuccessful = self.protocolWrapper.delete_file(self.download.remoteFilePath)
+                removeSuccessful = self.protocolWrapper.delete_file(self.download.remote_file_path)
             except IOError as IOException:
-                logger.log(u"Error when trying to remove remote file %s : %s" % (self.download.remoteFilePath, str(IOException)), logger.DEBUG)
+                logger.log(u"Error when trying to remove remote file %s : %s" % (self.download.remote_file_path, str(IOException)), logger.DEBUG)
                 return              
             except:
-                logger.log(u"Unexpected error when trying to remove remote file %s. Exception : %s" % (self.download.remoteFilePath, str(sys.exc_type)), logger.DEBUG)
+                logger.log(u"Unexpected error when trying to remove remote file %s. Exception : %s" % (self.download.remote_file_path, str(sys.exc_type)), logger.DEBUG)
                 return
             else:
                 if removeSuccessful:
-                    logger.log("Remove completed successfully for file %s" % (self.download.remoteFilePath), logger.DEBUG)
+                    logger.log("Remove completed successfully for file %s" % (self.download.remote_file_path), logger.DEBUG)
                     # We also try to remove the parent directories. They will be removed only if empty, and we stop at the remote root directory.
-                    self.protocolWrapper.delete_empty_dir(os.path.dirname(self.download.remoteFilePath), recurse=True)  
+                    self.protocolWrapper.delete_empty_dir(os.path.dirname(self.download.remote_file_path), recurse=True)  
 
 
 
