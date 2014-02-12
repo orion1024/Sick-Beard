@@ -31,8 +31,7 @@ from sickbeard import logger
 # All general settings are kept as properties, all protocol-specific settings are kept as an object of type SeedboxDownloaderProtocolWrapperSettings
 # This allows to pass a setting object to the wrapper, without giving it all settings.
 def SeedboxDownloaderSettings():
-    def __init__(self,
-                    enabled=None, delete_remote_files=None, automove_in_postprocess_dir=None,
+    def __init__(self, enabled=None, delete_remote_files=None, automove_in_postprocess_dir=None,
                     check_frequency=None, landing_dir=None, download_episodes_only=None,
                     protocol=None, sftp_remote_host=None, sftp_remote_port=22,
                     sftp_landing_dir=None, sftp_remote_root_dir=".", sftp_remote_user=None,
@@ -47,7 +46,7 @@ def SeedboxDownloaderSettings():
 
         self.protocol_settings = SeedboxDownloaderProtocolWrapperSettings(
                                             protocol, sftp_remote_host, sftp_remote_port,
-                                            sftp_landing_dir, sftp_remote_root_dir,
+                                            landing_dir, sftp_remote_root_dir,
                                             sftp_remote_user, sftp_remote_auth_key,
                                             sftp_remote_password)
                                                 

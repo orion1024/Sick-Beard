@@ -66,14 +66,16 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
         else:
             logger.log(u"Not adding item, it's already in the queue or not the right type of object.", logger.DEBUG)
 
+
+
 class DownloadQueueItem(generic_queue.QueueItem):
-    def __init__(self, download, protocolWrapper, removeRemoteOnSuccess=False):
+    def __init__(self, download, protocolWrapper, remove_remote_on_success=False):
         generic_queue.QueueItem.__init__(self, 'Seedbox download')
         self.priority = generic_queue.QueuePriorities.NORMAL
        
         self.download = download
         self.protocolWrapper = protocolWrapper
-        self.removeRemoteOnSuccess = removeRemoteOnSuccess
+        self.remove_remote_on_success = remove_remote_on_success
      
         self.success = None
 
@@ -100,7 +102,7 @@ class DownloadQueueItem(generic_queue.QueueItem):
         # TODO : move the file to sickbeard post process directory if transfer is a success
         # TODO NEXT : remove remote directory if empty. Here or somewhere else ?
      
-        if self.removeRemoteOnSuccess and self.success:
+        if self.remove_remote_on_success and self.success:
             logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remote_file_path), logger.DEBUG)
             try:                
                 removeSuccessful = self.protocolWrapper.delete_file(self.download.remote_file_path)
