@@ -166,6 +166,12 @@ def change_SEARCH_FREQUENCY(freq):
 
     sickbeard.currentSearchScheduler.cycleTime = datetime.timedelta(minutes=sickbeard.SEARCH_FREQUENCY)
     sickbeard.backlogSearchScheduler.cycleTime = datetime.timedelta(minutes=sickbeard.get_backlog_cycle_time())
+    
+
+def reload_seedbox_downloader_settings():
+    sickbeard.autoSeedboxDownloaderScheduler.cycleTime = datetime.timedelta(minutes=sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY)
+    sickbeard.autoSeedboxDownloaderScheduler.action.reload_settings()
+    
 def change_IGNORE_WORDS(words):
 
     if words == None:

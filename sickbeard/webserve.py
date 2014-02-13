@@ -1541,10 +1541,11 @@ class ConfigSeedboxDownload:
         logger.log(u"Now saving seedbox settings...", logger.DEBUG)
  
         sickbeard.save_config()
+        config.reload_seedbox_downloader_settings()
         
-        logger.log(u"Logging %d errors..." % len(results), logger.DEBUG)
         
         if len(results) > 0:
+            logger.log(u"Logging %d errors..." % len(results), logger.DEBUG)
             for x in results:
                 logger.log(x, logger.ERROR)
             ui.notifications.error('Error(s) Saving Configuration',

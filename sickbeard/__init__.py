@@ -33,7 +33,8 @@ from sickbeard import providers, metadata
 from providers import ezrss, tvtorrents, torrentleech, btn, nzbsrus, newznab, womble, nzbx, omgwtfnzbs, binnewz, t411, tpi, cpasbien, piratebay, gks, kat
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator
 
-from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, frenchFinder, autoPostProcesser, subtitles, traktWatchListChecker, SentFTPChecker, seedboxDownloader, seedboxDownloadHelpers
+from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, frenchFinder, autoPostProcesser, subtitles, traktWatchListChecker, SentFTPChecker
+from sickbeard import seedboxDownloadHelpers, seedboxDownloader
 from sickbeard import helpers, db, exceptions, show_queue, search_queue, scheduler
 from sickbeard import logger
 from sickbeard import naming
@@ -1097,18 +1098,12 @@ def initialize(consoleLogging=True):
                                                runImmediately=False)
         
         
-        seedbox_downloader_settings_obj = seedboxDownloadHelpers.SeedboxDownloaderSettings(enabled=SEEDBOX_DOWNLOAD_ENABLED, delete_remote_files=SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES, automove_in_postprocess_dir=SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR,
-                            check_frequency=SEEDBOX_DOWNLOAD_CHECK_FREQUENCY, landing_dir=SEEDBOX_DOWNLOAD_LANDING_DIR, download_episodes_only=SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY,
-                            protocol=SEEDBOX_DOWNLOAD_PROTOCOL, sftp_remote_host=SEEDBOX_DOWNLOAD_SFTP_HOST, sftp_remote_port=SEEDBOX_DOWNLOAD_SFTP_PORT,
-                            sftp_remote_root_dir=SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR, sftp_remote_user=SEEDBOX_DOWNLOAD_SFTP_USERNAME,
-                            sftp_remote_auth_key=SEEDBOX_DOWNLOAD_SFTP_CERT_FILE, sftp_remote_password=SEEDBOX_DOWNLOAD_SFTP_PASSWORD)
-        
-        autoSeedboxDownloaderScheduler = scheduler.Scheduler(seedboxDownloader.SeedboxDownloader(seedbox_downloader_settings_obj),
-                                                         cycleTime=datetime.timedelta(minutes=1),
+        autoSeedboxDownloaderScheduler = scheduler.Scheduler(seedboxDownloader.SeedboxDownloader(),
+                                                         cycleTime=datetime.timedelta(minutes=SEEDBOX_DOWNLOAD_CHECK_FREQUENCY),
                                                          threadName="SEEDBOX_DOWNLOADER",
                                                          runImmediately=True)
         
-        seedboxDownloadQueueScheduler = scheduler.Scheduler(autoSeedboxDownloaderScheduler.action.downloadQueue,
+        seedboxDownloadQueueScheduler = scheduler.Scheduler(autoSeedboxDownloaderScheduler.action.download_queue,
                                                                  cycleTime=datetime.timedelta(seconds=3),
                                                                  threadName="SEEDBOX_DOWNLOAD_QUEUE",
                                                                  runImmediately=True)

@@ -29,7 +29,7 @@ from sickbeard import generic_queue
 #from sickbeard import search
 #from sickbeard import ui
 import seedboxDownloadHelpers
-from seedboxDownloadHelpers import printBytes
+from seedboxDownloadHelpers import print_bytes
 
 class SeedboxDownloadQueue(generic_queue.GenericQueue):
     
@@ -100,7 +100,6 @@ class DownloadQueueItem(generic_queue.QueueItem):
         logger.log("Finishing download from seedbox : %s with status %s" % (self.download.Name, self.success), logger.DEBUG)
         
         # TODO : move the file to sickbeard post process directory if transfer is a success
-        # TODO NEXT : remove remote directory if empty. Here or somewhere else ?
      
         if self.remove_remote_on_success and self.success:
             logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remote_file_path), logger.DEBUG)

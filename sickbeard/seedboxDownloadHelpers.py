@@ -30,7 +30,7 @@ from sickbeard import logger
 # This class holds all settings related to the module. Whether it's enabled, to delete remote files, etc.
 # All general settings are kept as properties, all protocol-specific settings are kept as an object of type SeedboxDownloaderProtocolWrapperSettings
 # This allows to pass a setting object to the wrapper, without giving it all settings.
-def SeedboxDownloaderSettings():
+class SeedboxDownloaderSettings():
     def __init__(self, enabled=None, delete_remote_files=None, automove_in_postprocess_dir=None,
                     check_frequency=None, landing_dir=None, download_episodes_only=None,
                     protocol=None, sftp_remote_host=None, sftp_remote_port=22,
@@ -62,7 +62,7 @@ def SeedboxDownloaderSettings():
         
 # This class holds all settings related to the protocol wrapper.
 # Kept separated from the general settings as it will passed on to the wrapper object and it doesn't care about general settings.
-def SeedboxDownloaderProtocolWrapperSettings():
+class SeedboxDownloaderProtocolWrapperSettings():
 
     def __init__(self,
                     protocol, sftp_remote_host=None, sftp_remote_port=22,
@@ -124,53 +124,46 @@ class SeedboxDownload():
 # At first only SFTP will be supported, but it will make adding other protocols easier
 class SeedboxDownloaderProtocolWrapper():
     
-    def __init__(self, protocol, remote_host, remote_port, landingDir, remote_root_dir=".", remote_user=None, remote_auth_key=None, remote_password=None):
+    def __init__(self, settings):
 
-        self.protocol = protocol
-        self.remote_host = remote_host
-        self.remote_port = remote_port
-        self.remote_user = remote_user
-        self.remote_auth_key = remote_auth_key
-        self.remote_password = remote_password
-        self.remote_root_dir = remote_root_dir
-        self.landingDir = landingDir
+        self.settings = settings
 
-        # TODO : There should a logic to check the consistency of parameters AND the fact that we can actually connect.
+        # TODO : There should be a logic to check the consistency of parameters AND the fact that we can actually connect.
         self.valid_configuration = True
 
-        if self.protocol=="SFTP":
-            self.sftp = pysftp.Connection(self.remote_host, self.remote_user, password=self.remote_password, log = True)
+        if self.settings.protocol=="SFTP":
+            self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, log = True)
 
     # List all files in the given directory, and return a list of SeedBoxDownload objects. The files are tested for local existence in here too.
-    def list_dir(self, remoteSubDir="", recursive=False, recursiveCall=False):
+    def list_dir(self, remote_subdir="", recursive=False, recursive_call=False):
         results = []
         
        
-        if self.protocol=="SFTP":
+        if self.settings.protocol=="SFTP":
             
             # If this is not a recursive call (ie we were not called by list_dir but from another code), we prepend the root dir.
             # If it is a recursive call, it has already been done so no need to.
             # Simply checking for the presence of "remote_root_dir" in the parameter is not enough as the subdir could have the same name as the root dir, but we would still want to append it in that case.
             
-            if recursiveCall:
-                remoteDir = remoteSubDir
+            if recursive_call:
+                remote_dir = remote_subdir
             else:
-                if remoteSubDir != "":
-                    remoteDir =  self.remote_root_dir + "/" + remoteSubDir
+                if remote_subdir != "":
+                    remote_dir =  self.settings.sftp_remote_root_dir + "/" + remote_subdir
                 else:
-                    remoteDir =  self.remote_root_dir
+                    remote_dir =  self.settings.sftp_remote_root_dir
             
-            #logger.log(u"Getting content of remote directory %s ..." % remoteDir, logger.DEBUG)
+            #logger.log(u"Getting content of remote directory %s ..." % remote_dir, logger.DEBUG)
             try:
-                remote_filenames = self.sftp.listdir(remoteDir)
+                remote_filenames = self.sftp.listdir(remote_dir)
             except IOError as IOexception:
-                logger.log(u"Error while listing directory %s (%s)" % (remoteDir, IOexception), logger.DEBUG)
+                logger.log(u"Error while listing directory %s (%s)" % (remote_dir, IOexception), logger.DEBUG)
             else:
             
                 #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
                 
                 for remote_filename in remote_filenames:
-                    remoteFullPath = remoteDir + "/" + remote_filename
+                    remoteFullPath = remote_dir + "/" + remote_filename
                     #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
                     
                     try:
@@ -188,9 +181,9 @@ class SeedboxDownloaderProtocolWrapper():
                             # Building local path out of the remote dir, the remote path and the landing directory.
                             
                             #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
-                            #logger.log(u"Building local path... remote_root_dir = <" + str(self.remote_root_dir) + u">, remote_file_path = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.landingDir)+u">", logger.DEBUG)
+                            #logger.log(u"Building local path... remote_root_dir = <" + str(self.settings.sftp_remote_root_dir) + u">, remote_file_path = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.settings.sftp_landing_dir)+u">", logger.DEBUG)
                             
-                            local_file_path = os.path.normpath(self.landingDir + "/" + remoteFullPath.replace(re.escape(self.remote_root_dir)+ "/","",1))
+                            local_file_path = os.path.normpath(self.settings.sftp_landing_dir + "/" + remoteFullPath.replace(re.escape(self.settings.sftp_remote_root_dir)+ "/","",1))
                             #logger.log(u"LocalPath = <" + str(local_file_path) + u">", logger.DEBUG)
                             
                             results.append(SeedboxDownload(remoteFullPath, local_file_path, remote_filename, attr.st_size))
@@ -216,7 +209,7 @@ class SeedboxDownloaderProtocolWrapper():
         
         # if the file exists and is_file_downloaded returned False, this means a partial download.
         if os.path.exists(download.local_file_path):
-            if self.protocol=="SFTP":
+            if self.settings.protocol=="SFTP":
                 # SFTP client doesn't handle resume so we need to remove the partially downloaded file
                 try:
                     os.remove(download.local_file_path)
@@ -227,12 +220,12 @@ class SeedboxDownloaderProtocolWrapper():
                 pass
         
         # If local directory does not exist we create it
-        localDirectory = os.path.dirname(download.local_file_path)
-        if not os.path.exists(localDirectory):
+        local_directory = os.path.dirname(download.local_file_path)
+        if not os.path.exists(local_directory):
             try:
-                os.makedirs(localDirectory)
+                os.makedirs(local_directory)
             except:
-                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (localDirectory, sys.exc_type), logger.DEBUG)
+                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (local_directory, sys.exc_type), logger.DEBUG)
                 return False
         
         # OK, now we can start downloading
@@ -252,7 +245,7 @@ class SeedboxDownloaderProtocolWrapper():
         
         return download.file_downloaded
 
-    def get_dir(self, remoteDir, recurse=False):
+    def get_dir(self, remote_dir, recurse=False):
          # TODO : implement later. Same as get_file but for all files in specified directory
 
         return True
@@ -260,7 +253,7 @@ class SeedboxDownloaderProtocolWrapper():
     def is_file_downloaded(self, remote_file_path, local_file_path):
 
         if os.path.exists(local_file_path):
-            if self.protocol=="SFTP":
+            if self.settings.protocol=="SFTP":
                 return self.sftp.size_match(remote_file_path, local_file_path)
             else:
                 return False
@@ -269,20 +262,19 @@ class SeedboxDownloaderProtocolWrapper():
 
     # Tries to reset the connection. Usually called when an error occurred during a normal operation.
     def reset(self):
-        if self.protocol=="SFTP":
+        if self.settings.protocol=="SFTP":
             self.sftp._sftp_connect()
         else:
             pass
 
-    def is_dir_downloaded(self, remoteDir, recurse=False):
+    def is_dir_downloaded(self, remote_dir, recurse=False):
         # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
 
         return True
 
     def delete_file(self, remote_file_path):
-        # TODO : implement later. Should return True or False whether the file deletion successfully completed or not
         
-        if self.protocol=="SFTP":
+        if self.settings.protocol=="SFTP":
             if self.sftp.exists(remote_file_path):
                 self.sftp.remove(remote_file_path)
                 return not self.sftp.exists(remote_file_path)
@@ -294,42 +286,42 @@ class SeedboxDownloaderProtocolWrapper():
         return False
 
     # Returns False if directory is empty and remove attempt failed. Returns True otherwise (ie, if directory is not empty or it not a directory, nothing is done and method returns True
-    def delete_empty_dir(self, remoteDir, recurse=False):
+    def delete_empty_dir(self, remote_dir, recurse=False):
         
-        if remoteDir == self.remote_root_dir:
-            logger.log("Not removing %s since it is the configured remote root directory." % remoteDir, logger.DEBUG)
+        if remote_dir == self.settings.sftp_remote_root_dir:
+            logger.log("Not removing %s since it is the configured remote root directory." % remote_dir, logger.DEBUG)
             return True
         else:
             try:
-                if self.sftp.exists(remoteDir):
-                    attr = self.sftp.stat(remoteDir)
+                if self.sftp.exists(remote_dir):
+                    attr = self.sftp.stat(remote_dir)
                     if stat.S_ISDIR(attr.st_mode):
-                        fileList = self.sftp.listdir(remoteDir)
+                        fileList = self.sftp.listdir(remote_dir)
                         if len(fileList) == 0:
-                            logger.log("Removing remote empty directory %s" % remoteDir, logger.DEBUG)
-                            self.sftp.rmdir(remoteDir)
+                            logger.log("Removing remote empty directory %s" % remote_dir, logger.DEBUG)
+                            self.sftp.rmdir(remote_dir)
                             
                             # If the remove was successful and this is a recursive remove, we now try to remove the parent directory.
-                            if not self.sftp.exists(remoteDir):
+                            if not self.sftp.exists(remote_dir):
                                 if recurse:
-                                    return self.delete_empty_dir(os.path.dirname(remoteDir), True)
+                                    return self.delete_empty_dir(os.path.dirname(remote_dir), True)
                                 else:
                                     return True 
                             else:
                                 return False
                         else:
-                            logger.log("Remote directory %s not empty : %d file(s) found." % (remoteDir, len(fileList)), logger.DEBUG)
+                            logger.log("Remote directory %s not empty : %d file(s) found." % (remote_dir, len(fileList)), logger.DEBUG)
                             return False
                     else:
-                        logger.log("%s is not a directory. Not removing it." % (remoteDir), logger.DEBUG)
+                        logger.log("%s is not a directory. Not removing it." % (remote_dir), logger.DEBUG)
                         return False
                 else:
                     return False
             except IOError as IOException:
-                logger.log(u"Error when trying to remove remote directory %s : %s" % (remoteDir, str(IOException)), logger.DEBUG)
+                logger.log(u"Error when trying to remove remote directory %s : %s" % (remote_dir, str(IOException)), logger.DEBUG)
                 return False           
             except:
-                logger.log(u"Unexpected error when trying to remove remote directory %s. Exception : %s" % (remoteDir, str(sys.exc_type)), logger.DEBUG)
+                logger.log(u"Unexpected error when trying to remove remote directory %s. Exception : %s" % (remote_dir, str(sys.exc_type)), logger.DEBUG)
                 return False
 
 
@@ -343,7 +335,7 @@ class SeedboxDownloaderProtocolWrapper():
 
 # Helper method. Prints a value in Byte in a human readable way (ie 14 MG/GB whatever)
 # Credits to Fred Cicera : http://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size
-def printBytes(num):
+def print_bytes(num):
     for x in ['bytes','KB','MB','GB']:
         if num < 1024.0 and num > -1024.0:
             return "%3.1f %s" % (num, x)

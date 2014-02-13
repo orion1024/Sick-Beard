@@ -29,43 +29,87 @@ from lib.pysftp import pysftp
 
 import seedboxDownload_queue
 import seedboxDownloadHelpers
-from seedboxDownloadHelpers import printBytes
+from seedboxDownloadHelpers import print_bytes
 
 # This class will populate the download queue, primarily by using the protocol wrapper to list remote files to be downloaded.
 class SeedboxDownloader():
     
-    def __init__(self, settings):
-    
-        if isinstance(settings, SeedboxDownloaderSettings):
-            
-            # TODO : implement getting settings from global sickbeard configuration
-            
-            self.settings = settings
-            
-            #self.discover_protocol_wrapper = SeedboxDownloaderProtocolWrapper(*args)
-            self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper("SFTP","localhost","",
-                                                                    "/home/orion1024/Documents/landing_dev", remote_root_dir="myremotedir",
-                                                                    remote_user="sftp", remote_password="p59kN85vTaqnkGoEJsgt")
-            # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
-            # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
-            self.queue_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper("SFTP","localhost","",
-                                                                    "/home/orion1024/Documents/landing_dev", remote_root_dir="myremotedir",
-                                                                    remote_user="sftp", remote_password="p59kN85vTaqnkGoEJsgt")            
-    
-            self.downloads = []
-            self.download_queue = seedboxDownload_queue.SeedboxDownloadQueue()
-            
-            # Initializing stats variables
-            self.total_files = 0
-            self.total_downloaded_files = 0
-            self.total_already_present_files = 0
-            self.total_files_to_download = 0
-            self.total_downloaded_bytes = 0
-            self.total_bytes_to_download = 0
-        else:
-            pass
+    def __init__(self):
         
+        
+        self.downloads = []
+        self.download_queue = seedboxDownload_queue.SeedboxDownloadQueue()
+        
+        # Initializing stats variables
+        self.total_files = 0
+        self.total_downloaded_files = 0
+        self.total_already_present_files = 0
+        self.total_files_to_download = 0
+        self.total_downloaded_bytes = 0
+        self.total_bytes_to_download = 0
+        
+        # Getting the settings from sickbeard
+        self.settings = seedboxDownloadHelpers.SeedboxDownloaderSettings()
+        self.reload_settings()
+        
+        #self.discover_protocol_wrapper = SeedboxDownloaderProtocolWrapper(*args)
+        self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
+        # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
+        # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
+        self.queue_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)            
 
+    
+    # Reload settings from sickbeard configuration
+    def reload_settings(self):
+        
+        logger.log(u"Reloading Seedbox Download settings from sickbeard configuration.", logger.DEBUG)
+        
+        # General settings
+        self.settings.enabled=sickbeard.SEEDBOX_DOWNLOAD_ENABLED
+        
+        # Update queue items with the new setting for deletion if modified
+        if not self.settings.delete_remote_files == sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES:
+            for queue_item in self.download_queue.queue:
+                queue_item.remove_remote_on_success = sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES
+                
+        self.settings.delete_remote_files=sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES
+        self.settings.automove_in_postprocess_dir=sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR
+        self.settings.check_frequency=sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY
+        self.settings.landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        self.settings.download_episodes_only=sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY
+        
+        # SFTP Settings
+        #self.settings.protocol_settings.protocol=sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL
+        #self.settings.protocol_settings.sftp_remote_host=sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST
+        #self.settings.protocol_settings.sftp_remote_port=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT
+        #self.settings.protocol_settings.sftp_remote_root_dir=sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
+        #self.settings.protocol_settings.sftp_remote_user=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME
+        #self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+        #self.settings.protocol_settings.sftp_remote_password=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
+        #self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+       
+        # TEMP
+        self.settings.protocol_settings.protocol="SFTP"
+        self.settings.protocol_settings.sftp_remote_host="localhost"
+        self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        self.settings.protocol_settings.sftp_remote_port=""
+        self.settings.protocol_settings.sftp_remote_root_dir="myremotedir"
+        self.settings.protocol_settings.sftp_remote_user="sftp"
+        self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+        self.settings.protocol_settings.sftp_remote_password="p59kN85vTaqnkGoEJsgt"
+  
+        if self.settings.enabled:
+            if self.download_queue.is_download_paused():
+                logger.log(u"Seedbox download has been enabled, unpausing the download queue.", logger.MESSAGE)
+                self.download_queue.unpause_download()
+        elif not self.download_queue.is_download_paused():
+                logger.log(u"Seedbox download has been disabled, pausing the download queue.", logger.MESSAGE)
+                self.download_queue.pause_download()
+        
+        
+        return
+
+    # This method is called at the SEEDBOX_DOWNLOAD_CHECK_FREQUENCY by the scheduler defined in sickbeard namespace.
     def run(self):
         
         # If feature is disabled, don't do anything
@@ -90,15 +134,6 @@ class SeedboxDownloader():
             
             self.update_download_stats()
             self.log_download_stats()
-            
-            # TODO : to be tested
-            if self.download_queue.is_download_paused():
-                self.download_queue.unpause_download()
-
-        else:
-           if not self.download_queue.is_download_paused():
-                self.download_queue.pause_download()
-
             
         return          
 
@@ -164,10 +199,10 @@ class SeedboxDownloader():
     # Logs stats to Sickbeard log file : total size, number of downloaded files, downloaded bytes until now...
     def log_download_stats(self):
         # TODO : complete later
-        logger.log(u"Total files : %d (%s)" % (self.total_files,printBytes(self.totalBytes)), logger.MESSAGE)
-        logger.log(u"Total downloaded files : %d (%s)" % (self.total_downloaded_files,printBytes(self.total_downloaded_bytes)), logger.MESSAGE)
-        logger.log(u"Total files already present : %d (%s)" % (self.total_already_present_files,printBytes(self.totalAlreadyPresentBytes)), logger.MESSAGE)
-        logger.log(u"Total files to download : %d (%s)" % (self.total_files_to_download,printBytes(self.total_bytes_to_download)), logger.MESSAGE)
+        logger.log(u"Total files : %d (%s)" % (self.total_files,print_bytes(self.totalBytes)), logger.MESSAGE)
+        logger.log(u"Total downloaded files : %d (%s)" % (self.total_downloaded_files,print_bytes(self.total_downloaded_bytes)), logger.MESSAGE)
+        logger.log(u"Total files already present : %d (%s)" % (self.total_already_present_files,print_bytes(self.totalAlreadyPresentBytes)), logger.MESSAGE)
+        logger.log(u"Total files to download : %d (%s)" % (self.total_files_to_download,print_bytes(self.total_bytes_to_download)), logger.MESSAGE)
         logger.log(u"Total files in download queue : %d" % (len(self.download_queue.queue)), logger.MESSAGE)
 
         
