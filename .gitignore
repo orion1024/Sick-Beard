@@ -41,3 +41,4 @@ Thumbs.db
 .directory
 *~
 /.settings
+zoneinfo*.tar.gz
