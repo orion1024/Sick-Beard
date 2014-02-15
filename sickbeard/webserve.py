@@ -159,7 +159,7 @@ ManageMenu = [
     { 'title': 'Backlog Overview',          'path': 'manage/backlogOverview' },
     { 'title': 'Manage Searches',           'path': 'manage/manageSearches'  },
     { 'title': 'Episode Status Management', 'path': 'manage/episodeStatuses' },
-	{ 'title': 'Manage Missed Subtitles',   'path': 'manage/subtitleMissed' },
+    { 'title': 'Manage Missed Subtitles',   'path': 'manage/subtitleMissed' },
 ]
 if sickbeard.USE_SUBTITLES:
     ManageMenu.append({ 'title': 'Missed Subtitle Management', 'path': 'manage/subtitleMissed' })

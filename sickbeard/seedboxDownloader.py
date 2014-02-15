@@ -88,6 +88,7 @@ class SeedboxDownloader():
         #self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
         #self.settings.protocol_settings.sftp_remote_password=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
         #self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        #self.settings.protocol_settings.sftp_use_cert=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
        
         # TEMP
         self.settings.protocol_settings.protocol="SFTP"
@@ -98,7 +99,8 @@ class SeedboxDownloader():
         self.settings.protocol_settings.sftp_remote_user="sftp"
         self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
         self.settings.protocol_settings.sftp_remote_password="p59kN85vTaqnkGoEJsgt"
-  
+        self.settings.protocol_settings.sftp_use_cert=False
+         
         if self.settings.enabled:
             if self.download_queue.is_download_paused():
                 logger.log(u"Seedbox download has been enabled, unpausing the download queue.", logger.MESSAGE)
