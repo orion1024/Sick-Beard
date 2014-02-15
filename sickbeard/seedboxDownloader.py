@@ -21,6 +21,7 @@ import stat
 import sys
 import re
 import datetime
+import shutil
 
 import sickbeard
 from sickbeard import logger
@@ -114,29 +115,67 @@ class SeedboxDownloader():
         
         # If feature is disabled, don't do anything
         if self.settings.enabled:
+
+
             logger.log(u"Checking seedbox for files...", logger.MESSAGE)
                
             new_downloads = self.discover_protocol_wrapper.list_dir(recursive=True)   
             
             logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
-            
-            self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)
+                        
+            self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
            
             # TODO : remove this line later when testing is over.
             for download in self.downloads:
                 if download.file_download_failed:
                     logger.log(u"Failed download : %s (%s)" % (download.Name, download.file_download_error), logger.MESSAGE)
-    
-            # TODO : remove this line later when testing is over.
-            self.downloads = []
             
             self.add_new_downloads(new_downloads)
+            
+            if self.settings.automove_in_postprocess_dir:
+                self.move_downloads_to_postprocess_dir()
+
             
             self.update_download_stats()
             self.log_download_stats()
             
         return          
 
+    # Iterates against all known downloads and move them to the post-process directory.
+    def move_downloads_to_postprocess_dir(self):
+        
+        move_count = 0
+        if os.path.exists(sickbeard.TV_DOWNLOAD_DIR):
+            
+            for download in self.downloads:
+                                
+                if (download.file_downloaded or download.file_already_present) and not download.file_moved:
+                    
+                    # we move the file in a post process subdirectory relative to the landing directory
+                    post_process_subdir = os.path.normpath(os.path.join(sickbeard.TV_DOWNLOAD_DIR, os.path.relpath(os.path.dirname(download.local_file_path), self.settings.landing_dir)))
+                    
+                    # First we create the necessary directories then we move the file in it.
+                    if not os.path.exists(post_process_subdir):
+                        try:
+                            os.makedirs(post_process_subdir)
+                        except IOError as IOException:
+                            logger.log(u"Error when trying to create post process subdir %s : %s" % (post_process_subdir, str(IOException)), logger.DEBUG)
+                    else:
+                        try:
+                            shutil.move(download.local_file_path, post_process_subdir)
+                        except shutil.Error as errorException :
+                            logger.log(u"Error when trying to move file %s to post process dir : %s" % (download.Name, str(errorException)), logger.DEBUG)
+                        else:
+                            download.file_moved = True
+                            move_count = move_count + 1
+                            logger.log(u"File %s successfully moved to post-process dir." % (download.Name), logger.DEBUG)
+        else:
+            logger.log(u"Post-process directory not found, not moving downloaded files into it. Directory is %s" % sickbeard.TV_DOWNLOAD_DIR, logger.ERROR)
+        
+        logger.log(u"%d file(s) moved to post-process directory." % move_count, logger.MESSAGE)    
+        
+        return
+    
     # Add new downloads if it isn't already in the list, to the internal list AND to the queue.
     def add_new_downloads(self, new_downloads):
         
@@ -206,5 +245,16 @@ class SeedboxDownloader():
         logger.log(u"Total files in download queue : %d" % (len(self.download_queue.queue)), logger.MESSAGE)
 
         
-        return 
+        return
+    
+    # Called when Sickbeard is stopping itself.
+    def cleanup(self):
+        
+        # We want to move all downloaded files to post-process dir before going down.
+        if self.settings.automove_in_postprocess_dir:
+            self.move_downloads_to_postprocess_dir()
+        
+        # TODO : close cleanly wrappers
+        
+        return
 

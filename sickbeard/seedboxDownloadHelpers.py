@@ -99,6 +99,7 @@ class SeedboxDownload():
         self.transferred_bytes = 0
         self.file_downloaded = False
         self.file_downloading = False
+        self.file_moved = False
         
         # if the file download fails, this variable will be set to True
         self.file_download_failed = False

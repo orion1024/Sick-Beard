@@ -1298,6 +1298,10 @@ def halt():
                     autoSeedboxDownloaderScheduler.thread.join(10)
                 except:
                     pass
+                
+                autoSeedboxDownloaderScheduler.action.cleanup()
+
+
 
             if seedboxDownloadQueueScheduler:
                 seedboxDownloadQueueScheduler.abort = True
@@ -1756,17 +1760,17 @@ def save_config():
     new_config['FTP']['ftp_passive'] = int(FTP_PASSIVE)
     
     new_config['SEEDBOXDOWNLOAD'] = {}
-    new_config['SEEDBOXDOWNLOAD']['enabled'] = SEEDBOX_DOWNLOAD_ENABLED
+    new_config['SEEDBOXDOWNLOAD']['enabled'] = int(SEEDBOX_DOWNLOAD_ENABLED)
     new_config['SEEDBOXDOWNLOAD']['check_frequency'] = SEEDBOX_DOWNLOAD_CHECK_FREQUENCY
-    new_config['SEEDBOXDOWNLOAD']['delete_remote_files'] = SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES
-    new_config['SEEDBOXDOWNLOAD']['download_episodes_only'] = SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY
-    new_config['SEEDBOXDOWNLOAD']['automove_in_postprocess_dir'] = SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR
+    new_config['SEEDBOXDOWNLOAD']['delete_remote_files'] = int(SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES)
+    new_config['SEEDBOXDOWNLOAD']['download_episodes_only'] = int(SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY)
+    new_config['SEEDBOXDOWNLOAD']['automove_in_postprocess_dir'] = int(SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR)
     new_config['SEEDBOXDOWNLOAD']['landing_dir'] = SEEDBOX_DOWNLOAD_LANDING_DIR
     new_config['SEEDBOXDOWNLOAD']['protocol'] = SEEDBOX_DOWNLOAD_PROTOCOL
     new_config['SEEDBOXDOWNLOAD']['sftp_host'] = SEEDBOX_DOWNLOAD_SFTP_HOST
     new_config['SEEDBOXDOWNLOAD']['sftp_port'] = SEEDBOX_DOWNLOAD_SFTP_PORT
     new_config['SEEDBOXDOWNLOAD']['sftp_username'] = SEEDBOX_DOWNLOAD_SFTP_USERNAME
-    new_config['SEEDBOXDOWNLOAD']['sftp_use_cert'] = SEEDBOX_DOWNLOAD_SFTP_USE_CERT
+    new_config['SEEDBOXDOWNLOAD']['sftp_use_cert'] = int(SEEDBOX_DOWNLOAD_SFTP_USE_CERT)
     new_config['SEEDBOXDOWNLOAD']['sftp_cert_file'] = SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
     new_config['SEEDBOXDOWNLOAD']['sftp_password'] = SEEDBOX_DOWNLOAD_SFTP_PASSWORD
     new_config['SEEDBOXDOWNLOAD']['sftp_remote_root_dir'] = SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
