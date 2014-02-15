@@ -113,8 +113,7 @@
                             <label class="clearfix" for="configured_protocol">
                                 <span class="component-title jumbo">Configure Protocol:</span>
                                 <span class="component-desc">
-                                    
-                                    <select id="configured_protocol">
+                                    <select id="configured_protocol" name="configured_protocol">
                                        
                                             <option value="sftp">SFTP</option>
                                         
@@ -166,7 +165,7 @@
                             <div class="field-pair">
                                 <input type="checkbox" name="sftp_use_cert" id="sftp_use_cert" #if $sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT == True then "checked=\"checked\"" else ""# />
                                 <label class="clearfix" for="sftp_use_cert">
-                                    <span class="component-title">Use certificat for authentication instead of password (recommended)</span>
+                                    <span class="component-title">Use a certificate for authentication instead of password (recommended)</span>
                                     <span class="component-desc">The use of a certificate is strongly advised over a password, as sickbeard will store the password unencrypted in its config files.</span>
                                 </label>
                             </div>

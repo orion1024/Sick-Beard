@@ -80,26 +80,26 @@ class SeedboxDownloader():
         self.settings.download_episodes_only=sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY
         
         # SFTP Settings
-        #self.settings.protocol_settings.protocol=sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL
-        #self.settings.protocol_settings.sftp_remote_host=sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST
-        #self.settings.protocol_settings.sftp_remote_port=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT
-        #self.settings.protocol_settings.sftp_remote_root_dir=sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
-        #self.settings.protocol_settings.sftp_remote_user=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME
-        #self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
-        #self.settings.protocol_settings.sftp_remote_password=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
-        #self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
-        #self.settings.protocol_settings.sftp_use_cert=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
+        self.settings.protocol_settings.protocol=sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL
+        self.settings.protocol_settings.sftp_remote_host=sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST
+        self.settings.protocol_settings.sftp_remote_port=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT
+        self.settings.protocol_settings.sftp_remote_root_dir=sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
+        self.settings.protocol_settings.sftp_remote_user=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME
+        self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+        self.settings.protocol_settings.sftp_remote_password=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
+        self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        self.settings.protocol_settings.sftp_use_cert=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
        
         # TEMP
-        self.settings.protocol_settings.protocol="SFTP"
-        self.settings.protocol_settings.sftp_remote_host="localhost"
-        self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
-        self.settings.protocol_settings.sftp_remote_port=""
-        self.settings.protocol_settings.sftp_remote_root_dir="myremotedir"
-        self.settings.protocol_settings.sftp_remote_user="sftp"
-        self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
-        self.settings.protocol_settings.sftp_remote_password="p59kN85vTaqnkGoEJsgt"
-        self.settings.protocol_settings.sftp_use_cert=False
+        #self.settings.protocol_settings.protocol="SFTP"
+        #self.settings.protocol_settings.sftp_remote_host="localhost"
+        #self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        #self.settings.protocol_settings.sftp_remote_port=""
+        #self.settings.protocol_settings.sftp_remote_root_dir="myremotedir"
+        #self.settings.protocol_settings.sftp_remote_user="sftp"
+        #self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+        #self.settings.protocol_settings.sftp_remote_password="p59kN85vTaqnkGoEJsgt"
+        #self.settings.protocol_settings.sftp_use_cert=False
          
         if self.settings.enabled:
             if self.download_queue.is_download_paused():
@@ -167,10 +167,14 @@ class SeedboxDownloader():
                             shutil.move(download.local_file_path, post_process_subdir)
                         except shutil.Error as errorException :
                             logger.log(u"Error when trying to move file %s to post process dir : %s" % (download.Name, str(errorException)), logger.DEBUG)
+                        except IOError as IOException :
+                            logger.log(u"Error when trying to move file %s to post process dir : %s" % (download.Name, str(IOException)), logger.DEBUG)
+                        
                         else:
                             download.file_moved = True
                             move_count = move_count + 1
                             logger.log(u"File %s successfully moved to post-process dir." % (download.Name), logger.DEBUG)
+                # TODO : remove empty dir
         else:
             logger.log(u"Post-process directory not found, not moving downloaded files into it. Directory is %s" % sickbeard.TV_DOWNLOAD_DIR, logger.ERROR)
         
@@ -252,11 +256,16 @@ class SeedboxDownloader():
     # Called when Sickbeard is stopping itself.
     def cleanup(self):
         
-        # We want to move all downloaded files to post-process dir before going down.
-        if self.settings.automove_in_postprocess_dir:
-            self.move_downloads_to_postprocess_dir()
+        try:
+            # We want to move all downloaded files to post-process dir before going down.
+            if self.settings.automove_in_postprocess_dir:
+                self.move_downloads_to_postprocess_dir()
+        except:
+            # as we are ending processes, we catch any exception and simply display it in the log.
+            logger.log(u"Error while cleanup, when trying to move files to post-process directory : %s" % (sys.exc_info()[0]), logger.DEBUG)
         
-        # TODO : close cleanly wrappers
+        
+        # TODO : close cleanly wrappers. Halt transfer ?
         
         return
 

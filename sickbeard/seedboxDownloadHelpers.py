@@ -132,7 +132,7 @@ class SeedboxDownloaderProtocolWrapper():
         # TODO : There should be a logic to check the consistency of parameters AND the fact that we can actually connect.
         self.valid_configuration = True
 
-        if self.settings.protocol=="SFTP":
+        if self.settings.protocol=="sftp":
             self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, log = True)
 
     # List all files in the given directory, and return a list of SeedBoxDownload objects. The files are tested for local existence in here too.
@@ -140,7 +140,7 @@ class SeedboxDownloaderProtocolWrapper():
         results = []
         
        
-        if self.settings.protocol=="SFTP":
+        if self.settings.protocol=="sftp":
             
             # If this is not a recursive call (ie we were not called by list_dir but from another code), we prepend the root dir.
             # If it is a recursive call, it has already been done so no need to.
@@ -210,7 +210,7 @@ class SeedboxDownloaderProtocolWrapper():
         
         # if the file exists and is_file_downloaded returned False, this means a partial download.
         if os.path.exists(download.local_file_path):
-            if self.settings.protocol=="SFTP":
+            if self.settings.protocol=="sftp":
                 # SFTP client doesn't handle resume so we need to remove the partially downloaded file
                 try:
                     os.remove(download.local_file_path)
@@ -254,7 +254,7 @@ class SeedboxDownloaderProtocolWrapper():
     def is_file_downloaded(self, remote_file_path, local_file_path):
 
         if os.path.exists(local_file_path):
-            if self.settings.protocol=="SFTP":
+            if self.settings.protocol=="sftp":
                 return self.sftp.size_match(remote_file_path, local_file_path)
             else:
                 return False
@@ -263,7 +263,7 @@ class SeedboxDownloaderProtocolWrapper():
 
     # Tries to reset the connection. Usually called when an error occurred during a normal operation.
     def reset(self):
-        if self.settings.protocol=="SFTP":
+        if self.settings.protocol=="sftp":
             self.sftp._sftp_connect()
         else:
             pass
@@ -275,7 +275,7 @@ class SeedboxDownloaderProtocolWrapper():
 
     def delete_file(self, remote_file_path):
         
-        if self.settings.protocol=="SFTP":
+        if self.settings.protocol=="sftp":
             if self.sftp.exists(remote_file_path):
                 self.sftp.remove(remote_file_path)
                 return not self.sftp.exists(remote_file_path)

@@ -1499,10 +1499,27 @@ class ConfigSeedboxDownload:
         
     @cherrypy.expose
     def saveSeedboxDownload (self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
-                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None ):
+                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None,
+                                    configured_protocol=None,sftp_remote_host=None,sftp_remote_port=None,sftp_remote_root_dir=None,
+                                    sftp_remote_user=None,sftp_remote_auth_key=None,sftp_remote_password=None,
+                                    sftp_use_cert=None):
 
-        #seedboxdownload_delete_remote_files=on&seedboxdownload_check_frequency=30&seedboxdownload_landing_dir=
-        
+
+#seedboxdownload_enabled=on
+#seedboxdownload_delete_remote_files=on
+#seedboxdownload_automove_in_postprocess_dir=on
+#seedboxdownload_check_frequency=1
+#seedboxdownload_landing_dir=%2Fhome%2Forion1024%2FDocuments%2Flanding_dev2
+#configured_protocol=sftp
+#sftp_remote_host=
+#sftp_remote_port=22
+#sftp_remote_user=
+#sftp_use_cert=on
+#sftp_remote_auth_key=
+#sftp_remote_password=
+#sftp_remote_root_dir=
+#        #seedboxdownload_delete_remote_files=on&seedboxdownload_check_frequency=30&seedboxdownload_landing_dir=
+#        
         logger.log(u"Entering saveSeedboxDownload...", logger.DEBUG)
             
         results= []
@@ -1536,13 +1553,53 @@ class ConfigSeedboxDownload:
             sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR = seedboxdownload_landing_dir
         else:
             results.append("Landing directory does not exists, setting is unchanged.")
+
+        if configured_protocol:
+            sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL = configured_protocol
+            
+        if sftp_remote_host:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST = sftp_remote_host
+            
+        if sftp_remote_port:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT = sftp_remote_port
+            
+        if sftp_remote_root_dir:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR = sftp_remote_root_dir
+            
+        if sftp_remote_user:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME = sftp_remote_user
+            
+        if sftp_remote_auth_key:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE = sftp_remote_auth_key
+            
+        if sftp_remote_password:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD = sftp_remote_password
+            
+        if seedboxdownload_landing_dir:
+            sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR = seedboxdownload_landing_dir
+        
+        if sftp_use_cert == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT = 0
+
    
        
         logger.log(u"Now saving seedbox settings...", logger.DEBUG)
  
         sickbeard.save_config()
         config.reload_seedbox_downloader_settings()
+
         
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
+        #self.settings.protocol_settings.=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
         
         if len(results) > 0:
             logger.log(u"Logging %d errors..." % len(results), logger.DEBUG)
