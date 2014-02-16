@@ -54,6 +54,7 @@ class Connection(object):
             paramiko.util.log_to_file(templog)
 
         # Begin the SSH transport.
+        self._transport_live = False
         self._transport = paramiko.Transport((host, port))
         self._transport_live = True
         self._ssh = paramiko.SSHClient()

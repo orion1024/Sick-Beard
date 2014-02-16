@@ -150,39 +150,48 @@ class SeedboxDownloaderProtocolWrapper():
             self.disconnect()
         
         if self.settings.protocol=="sftp":
-            if self.settings.sftp_use_cert:
-                try:
-                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, private_key=self.settings.sftp_remote_auth_key , log = False)                
-                except pysftp.paramiko.AuthenticationException as auth_exception:
-                    self.connected = False
-                    self.last_connect_result = str(auth_exception) 
-                    logger.log(u"SFTP authentication error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(auth_exception)), logger.ERROR)
-                except IOError as io_exception:
-                    self.connected = False
-                    self.last_connect_result = str(io_exception) 
-                    logger.log(u"IO error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_exception)), logger.ERROR)
+            try:
+                if self.settings.sftp_use_cert:
+                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, private_key=self.settings.sftp_remote_auth_key, port=self.settings.sftp_remote_port, log = False)                
                 else:
-                    self.connected = True
-                    self.last_connect_result = "Connection successful" 
-            else:
-                try:
-                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, log = False)
-                except pysftp.paramiko.AuthenticationException as auth_exception:
-                    self.connected = False
-                    self.last_connect_result = str(auth_exception) 
-                    logger.log(u"SFTP authentication error connecting to seedbox. Login is %s, check your password, error message is '%s'" % (self.settings.sftp_remote_user, str(auth_exception)), logger.ERROR)
-                except IOException as io_error:
-                    self.connected = False
-                    self.last_connect_result = str(io_error) 
-                    logger.log(u"IO error connecting to seedbox. Login is %s, error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_error)), logger.ERROR)
+                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, port=self.settings.sftp_remote_port, log = False)
+            
+            except pysftp.paramiko.AuthenticationException as auth_exception:
+               
+                self.connected = False
+                if self.settings.sftp_use_cert:
+                    self.last_connect_result = u"SFTP authentication error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(auth_exception))
                 else:
-                    self.connected = True
-                    self.last_connect_result = "Connection successful" 
+                    self.last_connect_result = u"SFTP authentication error connecting to seedbox. Login is %s, check your password, error message is '%s'" % (self.settings.sftp_remote_user, str(auth_exception))
 
+                logger.log(self.last_connect_result, logger.ERROR)
+                
+            except IOError as io_exception:
+  
+                self.connected = False
+                if self.settings.sftp_use_cert:
+                    self.last_connect_result = u"IO error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_exception))
+                else:
+                    self.last_connect_result = u"IO error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_exception))
+                
+                logger.log(self.last_connect_result, logger.ERROR)
+                
+            except pysftp.paramiko.SSHException as ssh_exception:
+               
+                self.connected = False
+                self.last_connect_result = u"SFTP SSH error connecting to seedbox. Remote host is %s, remote port is %s, error message is '%s'" % (self.settings.sftp_remote_host, self.settings.sftp_remote_port, str(ssh_exception))
+
+                logger.log(self.last_connect_result, logger.ERROR)
+            
+            else:
+                self.connected = True
+                self.last_connect_result = "Connection to seedbox successful." 
+                logger.log(self.last_connect_result, logger.MESSAGE)
+                
         return self.connected
 
     def disconnect(self):
-        # TODO : implement later. This function should be called only internally if necessary,, not by outside code. Objective is to keep the internal workings hidden from calling objects.
+        # TODO : implement later. This function should be called only internally if necessary,s not by outside code. Objective is to keep the internal workings hidden from calling objects.
 
         self.connected = False
         
@@ -211,7 +220,7 @@ class SeedboxDownloaderProtocolWrapper():
             try:
                 remote_filenames = self.sftp.listdir(remote_dir)
             except IOError as IOexception:
-                logger.log(u"Error while listing directory %s (%s)" % (remote_dir, IOexception), logger.DEBUG)
+                logger.log(u"Error while listing directory %s (%s)" % (remote_dir, IOexception), logger.ERROR)
             else:
             
                 #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
@@ -223,7 +232,7 @@ class SeedboxDownloaderProtocolWrapper():
                     try:
                         attr = self.sftp.stat(remoteFullPath)
                     except IOError as IOexception:
-                        logger.log(u"Error while getting file info for %s (%s)" % (remoteFullPath, IOexception), logger.DEBUG)
+                        logger.log(u"Error while getting file info for %s (%s)" % (remoteFullPath, IOexception), logger.ERROR)
                     else:
                         # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
                         if stat.S_ISDIR(attr.st_mode):
@@ -279,7 +288,7 @@ class SeedboxDownloaderProtocolWrapper():
             try:
                 os.makedirs(local_directory)
             except:
-                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (local_directory, sys.exc_type), logger.DEBUG)
+                logger.log(u"Exception when trying to create local directory %s. Exception : %s" % (local_directory, sys.exc_type), logger.ERROR)
                 return False
         
         # OK, now we can start downloading
@@ -288,7 +297,7 @@ class SeedboxDownloaderProtocolWrapper():
         try:
             self.sftp.get(download.remote_file_path, download.local_file_path, download.update_download_progress)
         except IOError as IOException:
-            logger.log(u"Error when trying to get remote file %s : %s" % (download.remote_file_path, IOException), logger.DEBUG)
+            logger.log(u"Error when trying to get remote file %s : %s" % (download.remote_file_path, IOException), logger.ERROR)
             download.file_download_failed = True
             download.file_download_error = str(IOException)
             download.file_downloaded = False
@@ -303,7 +312,7 @@ class SeedboxDownloaderProtocolWrapper():
          # TODO : implement later. Same as get_file but for all files in specified directory
 
         return True
-
+# TODO : use posix path for remote files. Use os.path wherever else
     def is_file_downloaded(self, remote_file_path, local_file_path):
 
         if os.path.exists(local_file_path):

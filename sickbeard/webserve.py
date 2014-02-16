@@ -1543,7 +1543,10 @@ class ConfigSeedboxDownload:
         # Protocol settings
         sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL = configured_protocol
         sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST = sftp_remote_host
-        sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT = sftp_remote_port
+        try:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT = int(sftp_remote_port)
+        except ValueError:
+            results.append("Invalid value for the remote SFTP port, setting is unchanged.")
         sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR = sftp_remote_root_dir
         sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME = sftp_remote_user
         sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE = sftp_remote_auth_key

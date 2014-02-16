@@ -22,6 +22,7 @@ import datetime
 import time
 import sys
 import os
+import copy
 
 import sickbeard
 from sickbeard import db, logger, common, exceptions, helpers
@@ -69,14 +70,18 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
 
 
 class DownloadQueueItem(generic_queue.QueueItem):
-    def __init__(self, download, protocolWrapper, remove_remote_on_success=False):
+    def __init__(self, download, protocol_wrapper_settings, remove_remote_on_success=False):
         generic_queue.QueueItem.__init__(self, 'Seedbox download')
         self.priority = generic_queue.QueuePriorities.NORMAL
        
         self.download = download
-        self.protocolWrapper = protocolWrapper
         self.remove_remote_on_success = remove_remote_on_success
-     
+
+        # We create a copy of the settings. this is to ensure download will use the current settings even if they are changed between now and the moment the download start.
+        self.protocol_wrapper_settings = copy.deepcopy(protocol_wrapper_settings)
+        
+        # The protocol wrapper itself will be created just before the download starts.
+        self.protocol_wrapper = None
         self.success = None
 
     def execute(self):
@@ -84,11 +89,18 @@ class DownloadQueueItem(generic_queue.QueueItem):
         
         logger.log("Downloading from seedbox : %s" % self.download.Name, logger.DEBUG)
         
-        self.success = None
+        self.success = False
         
         self.download.file_download_failed = False
+
+        self.protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.protocol_wrapper_settings)
         
-        self.success = self.protocolWrapper.get_file(self.download)
+        if self.protocol_wrapper.connected:
+            self.success = self.protocol_wrapper.get_file(self.download)
+        else:
+            self.success = False
+            
+        return
 
 
     def finish(self):
@@ -98,13 +110,11 @@ class DownloadQueueItem(generic_queue.QueueItem):
         generic_queue.QueueItem.finish(self)
         
         logger.log("Finishing download from seedbox : %s with status %s" % (self.download.Name, self.success), logger.DEBUG)
-        
-        # TODO : move the file to sickbeard post process directory if transfer is a success
-     
+
         if self.remove_remote_on_success and self.success:
             logger.log("Now removing remote file from seedbox (full path : '%s') " % (self.download.remote_file_path), logger.DEBUG)
             try:                
-                removeSuccessful = self.protocolWrapper.delete_file(self.download.remote_file_path)
+                removeSuccessful = self.protocol_wrapper.delete_file(self.download.remote_file_path)
             except IOError as IOException:
                 logger.log(u"Error when trying to remove remote file %s : %s" % (self.download.remote_file_path, str(IOException)), logger.DEBUG)
                 return              
@@ -115,7 +125,7 @@ class DownloadQueueItem(generic_queue.QueueItem):
                 if removeSuccessful:
                     logger.log("Remove completed successfully for file %s" % (self.download.remote_file_path), logger.DEBUG)
                     # We also try to remove the parent directories. They will be removed only if empty, and we stop at the remote root directory.
-                    self.protocolWrapper.delete_empty_dir(os.path.dirname(self.download.remote_file_path), recurse=True)  
+                    self.protocol_wrapper.delete_empty_dir(os.path.dirname(self.download.remote_file_path), recurse=True)  
 
 
 

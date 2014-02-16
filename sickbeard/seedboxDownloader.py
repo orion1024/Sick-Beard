@@ -37,8 +37,12 @@ class SeedboxDownloader():
     
     def __init__(self):
         
-        
+        # Initializing variables for handling transfers
         self.downloads = []
+        self.discover_protocol_wrapper = None
+        #self.queue_protocol_wrapper = None
+        
+        
         self.download_queue = seedboxDownload_queue.SeedboxDownloadQueue()
         
         # Initializing stats variables
@@ -57,7 +61,7 @@ class SeedboxDownloader():
         self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
         # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
         # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
-        self.queue_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)            
+        #self.queue_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)            
 
     
     # Reload settings from sickbeard configuration
@@ -80,6 +84,18 @@ class SeedboxDownloader():
         self.settings.download_episodes_only=sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY
         
         # SFTP Settings
+        
+        # If any settings regarding connection has changed, we need to reset the connection object.
+        need_to_reload = self.settings.protocol_settings.protocol != sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL or \
+                self.settings.protocol_settings.sftp_remote_host != sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST or \
+                self.settings.protocol_settings.sftp_remote_port != sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT or \
+                self.settings.protocol_settings.sftp_remote_root_dir != sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR or \
+                self.settings.protocol_settings.sftp_remote_user != sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME or \
+                self.settings.protocol_settings.sftp_remote_auth_key != sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE or \
+                self.settings.protocol_settings.sftp_remote_password != sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD or \
+                self.settings.protocol_settings.sftp_use_cert != sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
+
+        
         self.settings.protocol_settings.protocol=sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL
         self.settings.protocol_settings.sftp_remote_host=sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST
         self.settings.protocol_settings.sftp_remote_port=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT
@@ -89,6 +105,10 @@ class SeedboxDownloader():
         self.settings.protocol_settings.sftp_remote_password=sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD
         self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
         self.settings.protocol_settings.sftp_use_cert=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
+        
+        if need_to_reload and self.discover_protocol_wrapper: #and self.queue_protocol_wrapper:
+            self.discover_protocol_wrapper.connect()
+            #self.queue_protocol_wrapper.connect()
        
         # TEMP
         #self.settings.protocol_settings.protocol="SFTP"
@@ -125,12 +145,11 @@ class SeedboxDownloader():
                 new_downloads = self.discover_protocol_wrapper.list_dir(recursive=True)   
                 
                 logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
-                            
-                self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
-               
-                   
+
                 # TODO : remove this line later when testing is over.   
                 self.downloads = []
+
+                self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
     
                 # TODO : remove this line later when testing is over.
                 for download in self.downloads:
@@ -197,7 +216,7 @@ class SeedboxDownloader():
             if not self.is_download_known(new_download):
                 self.downloads.append(new_download)
                 if not new_download.file_already_present:
-                    self.download_queue.add_item(seedboxDownload_queue.DownloadQueueItem(new_download, self.queue_protocol_wrapper, self.settings.delete_remote_files))
+                    self.download_queue.add_item(seedboxDownload_queue.DownloadQueueItem(new_download, self.settings.protocol_settings, self.settings.delete_remote_files))
                     new_download_count += 1
                     
         logger.log(u"%d new files to download." % new_download_count, logger.MESSAGE)
