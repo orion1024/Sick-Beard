@@ -25,6 +25,7 @@ import re
 import sickbeard
 from lib.pysftp import pysftp
 
+
 from sickbeard import logger
 
 # This class holds all settings related to the module. Whether it's enabled, to delete remote files, etc.
@@ -67,7 +68,7 @@ class SeedboxDownloaderProtocolWrapperSettings():
     def __init__(self,
                     protocol, sftp_remote_host=None, sftp_remote_port=22,
                     sftp_landing_dir=None, sftp_remote_root_dir=".", sftp_remote_user=None,
-                    sftp_remote_auth_key=None, sftp_remote_password=None):
+                    sftp_remote_auth_key=None, sftp_remote_password=None, sftp_use_cert=None):
 
         self.protocol = protocol
         self.sftp_remote_host = sftp_remote_host
@@ -77,6 +78,7 @@ class SeedboxDownloaderProtocolWrapperSettings():
         self.sftp_remote_password = sftp_remote_password
         self.sftp_remote_root_dir = sftp_remote_root_dir
         self.sftp_landing_dir = sftp_landing_dir
+        self.sftp_use_cert = sftp_use_cert
         
         return
         
@@ -127,13 +129,64 @@ class SeedboxDownloaderProtocolWrapper():
     
     def __init__(self, settings):
 
-        self.settings = settings
+        if settings != None:
+            self.settings = settings
+        else:
+            self.settings = SeedboxDownloaderProtocolWrapperSettings()
 
         # TODO : There should be a logic to check the consistency of parameters AND the fact that we can actually connect.
         self.valid_configuration = True
-
+        self.connected = False
+        self.last_connect_result = "No connection attempted yet."
+        
+        if self.valid_configuration:
+            self.connect()
+    
+    # Connecting...  
+    def connect(self):
+        
+        # Force disconnect if we are connected.
+        if self.connected:
+            self.disconnect()
+        
         if self.settings.protocol=="sftp":
-            self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, log = True)
+            if self.settings.sftp_use_cert:
+                try:
+                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, private_key=self.settings.sftp_remote_auth_key , log = False)                
+                except pysftp.paramiko.AuthenticationException as auth_exception:
+                    self.connected = False
+                    self.last_connect_result = str(auth_exception) 
+                    logger.log(u"SFTP authentication error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(auth_exception)), logger.ERROR)
+                except IOError as io_exception:
+                    self.connected = False
+                    self.last_connect_result = str(io_exception) 
+                    logger.log(u"IO error connecting to seedbox. Login is %s, certificate file is '%s', error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_exception)), logger.ERROR)
+                else:
+                    self.connected = True
+                    self.last_connect_result = "Connection successful" 
+            else:
+                try:
+                    self.sftp = pysftp.Connection(self.settings.sftp_remote_host, self.settings.sftp_remote_user, password=self.settings.sftp_remote_password, log = False)
+                except pysftp.paramiko.AuthenticationException as auth_exception:
+                    self.connected = False
+                    self.last_connect_result = str(auth_exception) 
+                    logger.log(u"SFTP authentication error connecting to seedbox. Login is %s, check your password, error message is '%s'" % (self.settings.sftp_remote_user, str(auth_exception)), logger.ERROR)
+                except IOException as io_error:
+                    self.connected = False
+                    self.last_connect_result = str(io_error) 
+                    logger.log(u"IO error connecting to seedbox. Login is %s, error message is '%s'" % (self.settings.sftp_remote_user, self.settings.sftp_remote_auth_key, str(io_error)), logger.ERROR)
+                else:
+                    self.connected = True
+                    self.last_connect_result = "Connection successful" 
+
+        return self.connected
+
+    def disconnect(self):
+        # TODO : implement later. This function should be called only internally if necessary,, not by outside code. Objective is to keep the internal workings hidden from calling objects.
+
+        self.connected = False
+        
+        return True
 
     # List all files in the given directory, and return a list of SeedBoxDownload objects. The files are tested for local existence in here too.
     def list_dir(self, remote_subdir="", recursive=False, recursive_call=False):
@@ -325,14 +378,6 @@ class SeedboxDownloaderProtocolWrapper():
                 logger.log(u"Unexpected error when trying to remove remote directory %s. Exception : %s" % (remote_dir, str(sys.exc_type)), logger.DEBUG)
                 return False
 
-
-    def connect(self):
-        # TODO : implement later. This function should be called only internally if necessary, not by outside code. Objective is to keep the internal workings hidden from calling objects.
-        return True
-
-    def disconnect(self):
-        # TODO : implement later. This function should be called only internally if necessary,, not by outside code. Objective is to keep the internal workings hidden from calling objects.
-        return True
 
 # Helper method. Prints a value in Byte in a human readable way (ie 14 MG/GB whatever)
 # Credits to Fred Cicera : http://stackoverflow.com/questions/1094841/reusable-library-to-get-human-readable-version-of-file-size

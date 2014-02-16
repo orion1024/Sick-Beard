@@ -53,7 +53,7 @@ class SeedboxDownloader():
         self.settings = seedboxDownloadHelpers.SeedboxDownloaderSettings()
         self.reload_settings()
         
-        #self.discover_protocol_wrapper = SeedboxDownloaderProtocolWrapper(*args)
+        # Creating the wrappers to handle remote SFTP file operations.
         self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
         # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
         # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
@@ -118,28 +118,35 @@ class SeedboxDownloader():
         # If feature is disabled, don't do anything
         if self.settings.enabled:
 
+            if self.discover_protocol_wrapper.connected:
 
-            logger.log(u"Checking seedbox for files...", logger.MESSAGE)
+                logger.log(u"Checking seedbox for files...", logger.MESSAGE)
+                   
+                new_downloads = self.discover_protocol_wrapper.list_dir(recursive=True)   
+                
+                logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
+                            
+                self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
                
-            new_downloads = self.discover_protocol_wrapper.list_dir(recursive=True)   
-            
-            logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
-                        
-            self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
-           
-            # TODO : remove this line later when testing is over.
-            for download in self.downloads:
-                if download.file_download_failed:
-                    logger.log(u"Failed download : %s (%s)" % (download.Name, download.file_download_error), logger.MESSAGE)
-            
-            self.add_new_downloads(new_downloads)
-            
-            if self.settings.automove_in_postprocess_dir:
-                self.move_downloads_to_postprocess_dir()
-
-            
-            self.update_download_stats()
-            self.log_download_stats()
+                   
+                # TODO : remove this line later when testing is over.   
+                self.downloads = []
+    
+                # TODO : remove this line later when testing is over.
+                for download in self.downloads:
+                    if download.file_download_failed:
+                        logger.log(u"Failed download : %s (%s)" % (download.Name, download.file_download_error), logger.MESSAGE)
+                
+                self.add_new_downloads(new_downloads)
+                
+                if self.settings.automove_in_postprocess_dir:
+                    self.move_downloads_to_postprocess_dir()
+    
+                
+                self.update_download_stats()
+                self.log_download_stats()
+            else:
+                logger.log(u"Not checking seedbox for files as there is no connection to the seedbox. Check your protocol settings or your state box state. Last attempt result was '%s'" % self.discover_protocol_wrapper.last_connect_result, logger.ERROR)
             
         return          
 
