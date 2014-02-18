@@ -44,8 +44,10 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
                 return True
         return False
 
-    def pause_download(self):
+    def pause_download(self, interrupt_cur_download=False, reason=""):
         self.min_priority = generic_queue.QueuePriorities.HIGH
+        if interrupt_cur_download:
+            self.currentItem.interrupt_download(reason)
 
     def unpause_download(self):
         self.min_priority = 0
@@ -102,6 +104,14 @@ class DownloadQueueItem(generic_queue.QueueItem):
             
         return
 
+    # Interrupt the download
+    def interrupt_download(self, reason=""):
+        # This will cause the callback method to raise an exception the next time it gets called.
+        if self.download.file_downloading:
+            self.download.interrupt_asked = True
+            self.download.interrupt_reason = reason
+            
+        return
 
     def finish(self):
         # don't let this linger if something goes wrong

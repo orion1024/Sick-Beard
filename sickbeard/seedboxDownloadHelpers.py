@@ -103,6 +103,10 @@ class SeedboxDownload():
         self.file_downloading = False
         self.file_moved = False
         
+        
+        self.interrupt_asked = False
+        self.interrupt_reason = ""
+        
         # if the file download fails, this variable will be set to True
         self.file_download_failed = False
         # if the file download fails, this variable will be set to the exception message returned.
@@ -113,6 +117,13 @@ class SeedboxDownload():
     def update_download_progress(self, transferred_bytes, file_size):       
         self.file_size = file_size
         self.transferred_bytes = transferred_bytes
+             
+        # If we were asked to interrupt download, we raise an exception.
+        if self.interrupt_asked:
+            
+            logger.log(u"Interrupting transfer of %s for reason : %s" % (self.Name, self.interrupt_reason), logger.DEBUG)
+            raise SeedboxDownloadFileTransferCancelledError(self.interrupt_reason)
+        
         return
 
     def __str__(self):
@@ -271,16 +282,8 @@ class SeedboxDownloaderProtocolWrapper():
             return False
         
         # if the file exists and is_file_downloaded returned False, this means a partial download.
-        if os.path.exists(download.local_file_path):
-            if self.settings.protocol=="sftp":
-                # SFTP client doesn't handle resume so we need to remove the partially downloaded file
-                try:
-                    os.remove(download.local_file_path)
-                except:
-                    logger.log(u"Exception when trying to remove %s. Exception : %s" % (download.local_file_path, sys.exc_type), logger.DEBUG)
-                    return False
-            else:
-                pass
+        # SFTP client doesn't handle resume so we need to remove the partially downloaded file if it exists.
+        self.delete_local_file(download)
         
         # If local directory does not exist we create it
         local_directory = os.path.dirname(download.local_file_path)
@@ -296,13 +299,22 @@ class SeedboxDownloaderProtocolWrapper():
         download.file_download_failed = False
         try:
             self.sftp.get(download.remote_file_path, download.local_file_path, download.update_download_progress)
-        except IOError as IOException:
-            logger.log(u"Error when trying to get remote file %s : %s" % (download.remote_file_path, IOException), logger.ERROR)
+        except IOError as io_exception:
+            logger.log(u"Error when trying to get remote file %s : %s" % (download.remote_file_path, io_exception), logger.ERROR)
             download.file_download_failed = True
-            download.file_download_error = str(IOException)
+            download.file_download_error = str(io_exception)
             download.file_downloaded = False
+        #except SeedboxDownloadFileTransferCancelledError as file_transfer_cancelled_exception:
+        #    logger.log(u"Transfer was cancelled for file %s. Reason : %s" % (download.remote_file_path, str(file_transfer_cancelled_exception)), logger.ERROR)
+        #    download.file_download_failed = True
+        #    download.file_download_error = str(file_transfer_cancelled_exception)
+        #    download.file_downloaded = False            
         else:
-            download.file_downloaded = self.is_file_downloaded(download.remote_file_path, download.local_file_path)
+            if download.interrupt_asked:
+                download.file_downloaded = False
+                download.file_download_error = u" Transfer interrupted. Reason was : %s" % download.interrupt_reason
+            else:
+                download.file_downloaded = self.is_file_downloaded(download.remote_file_path, download.local_file_path)
         finally:
             download.file_downloading = False
         
@@ -347,6 +359,19 @@ class SeedboxDownloaderProtocolWrapper():
             pass
             
         return False
+    
+    def delete_local_file(self, download):
+        
+        if os.path.exists(download.local_file_path):
+            if self.settings.protocol=="sftp":
+                # SFTP client doesn't handle resume so we need to remove the partially downloaded file
+                try:
+                    os.remove(download.local_file_path)
+                except:
+                    logger.log(u"Exception when trying to remove %s. Exception : %s" % (download.local_file_path, sys.exc_type), logger.DEBUG)
+                    return False
+            else:
+                pass
 
     # Returns False if directory is empty and remove attempt failed. Returns True otherwise (ie, if directory is not empty or it not a directory, nothing is done and method returns True
     def delete_empty_dir(self, remote_dir, recurse=False):
@@ -380,8 +405,8 @@ class SeedboxDownloaderProtocolWrapper():
                         return False
                 else:
                     return False
-            except IOError as IOException:
-                logger.log(u"Error when trying to remove remote directory %s : %s" % (remote_dir, str(IOException)), logger.DEBUG)
+            except IOError as io_exception:
+                logger.log(u"Error when trying to remove remote directory %s : %s" % (remote_dir, str(io_exception)), logger.DEBUG)
                 return False           
             except:
                 logger.log(u"Unexpected error when trying to remove remote directory %s. Exception : %s" % (remote_dir, str(sys.exc_type)), logger.DEBUG)
@@ -396,3 +421,17 @@ def print_bytes(num):
             return "%3.1f %s" % (num, x)
         num /= 1024.0
     return "%3.1f %s" % (num, 'TB')
+
+# Base class for exceptions type of this module
+class SeedboxDownloadError (Exception):
+    pass
+
+# Used to interrupt a file transfer
+class SeedboxDownloadFileTransferCancelledError (SeedboxDownloadError):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+
+    

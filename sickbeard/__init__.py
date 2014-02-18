@@ -1293,13 +1293,15 @@ def halt():
 
             if autoSeedboxDownloaderScheduler:
                 autoSeedboxDownloaderScheduler.abort = True
+                logger.log(u"Waiting for the SEEDBOX_DOWNLOAD cleanup to complete")
+                autoSeedboxDownloaderScheduler.action.cleanup()
                 logger.log(u"Waiting for the SEEDBOX_DOWNLOADER thread to exit")
                 try:
                     autoSeedboxDownloaderScheduler.thread.join(10)
                 except:
                     pass
                 
-                autoSeedboxDownloaderScheduler.action.cleanup()
+
 
 
 

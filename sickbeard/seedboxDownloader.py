@@ -22,6 +22,7 @@ import sys
 import re
 import datetime
 import shutil
+import time
 
 import sickbeard
 from sickbeard import logger
@@ -286,6 +287,21 @@ class SeedboxDownloader():
             # We want to move all downloaded files to post-process dir before going down.
             if self.settings.automove_in_postprocess_dir:
                 self.move_downloads_to_postprocess_dir()
+
+            # Now let's stop the current download.
+            if self.download_queue.is_download_in_progress():
+                
+                logger.log(u"Now trying to cancel current SEEDBOX download.", logger.DEBUG)
+
+                
+                self.download_queue.pause_download(interrupt_cur_download=True, reason="Sickbeard is halting.")
+            
+                # Waiting for 5 seconds max for the download to stop nicely.
+                wait_count = 0
+                while self.download_queue.currentItem.download.file_downloading and wait_count < 10:
+                    sleep(1)
+                    wait_count = wait_count + 1
+                
         except:
             # as we are ending processes, we catch any exception and simply display it in the log.
             logger.log(u"Error while cleanup, when trying to move files to post-process directory : %s" % (sys.exc_info()[0]), logger.DEBUG)
