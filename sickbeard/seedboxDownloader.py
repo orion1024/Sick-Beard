@@ -155,7 +155,7 @@ class SeedboxDownloader():
                 # TODO : remove this line later when testing is over.
                 for download in self.downloads:
                     if download.file_download_failed:
-                        logger.log(u"Failed download : %s (%s)" % (download.Name, download.file_download_error), logger.MESSAGE)
+                        logger.log(u"Failed download : %s (%s)." % (download.Name, download.file_download_error), logger.MESSAGE)
                 
                 self.add_new_downloads(new_downloads)
                 
@@ -221,7 +221,8 @@ class SeedboxDownloader():
                     new_download_count += 1
                     
         logger.log(u"%d new files to download." % new_download_count, logger.MESSAGE)
-        return
+        return 
+
 
     # Returns True if the download object given already exists in the list of downloads.
     def is_download_known(self, new_download):
@@ -292,13 +293,15 @@ class SeedboxDownloader():
             if download.file_downloading:
                 percent_complete = 100 * download.transferred_bytes / download.file_size
                 bytes_left_string = print_bytes(download.file_size - download.transferred_bytes)
-                download_string = u"%s : Downloading (%d %% complete, size : %s, %s left)" % (download.remote_file_path, percent_complete, print_bytes(download.file_size), bytes_left_string)
+                download_string = u"%s : Downloading (%d %% complete, size : %s, %s left)" % (download.Name, percent_complete, print_bytes(download.file_size), bytes_left_string)
             elif download.file_already_present:
-                download_string = u"%s : Already present locally (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))                
+                download_string = u"%s : Already present locally (size : %s)" % (download.Name, print_bytes(download.file_size))                
             elif download.file_downloaded:
-                download_string = u"%s : Downloaded (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))
+                download_string = u"%s : Downloaded (size : %s)" % (download.Name, print_bytes(download.file_size))
             else:
-                download_string = u"%s : Download queued (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))
+                download_string = u"%s : Download queued (size : %s, attempts : %d)" % (download.Name, print_bytes(download.file_size), download.download_attempts)
+                if download.download_attempts > 0:
+                    download_string = download_string + u" Last attempt result : %s" % download.file_download_error
             
             results.extend([download_string])
         
