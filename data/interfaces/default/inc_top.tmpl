@@ -103,12 +103,14 @@
 		\$("#SubMenu a:contains('Force')").addClass('btn').html('<span class="ui-icon ui-icon-transfer-e-w pull-left"></span> Force Full Update </a>');
 		\$("#SubMenu a:contains('Rename')").addClass('btn').html('<span class="ui-icon ui-icon-tag pull-left"></span> Preview Rename </a>');
 		\$("#SubMenu a:contains('French')").addClass('btn').html('<span class="ui-icon ui-icon-refresh pull-left"></span> French Search </a>');
+		\$("#SubMenu a[href='$sbRoot/config/seedboxdownload/']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Seedbox Download </a>');
 		\$("#SubMenu a[href='$sbRoot/config/subtitles/']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Search Subtitles </a>');
 		\$("#SubMenu a[href^='$sbRoot/home/subtitleShow']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Download Subtitles </a>');
 		\$("#SubMenu a[href^='$sbRoot/home/subtitleShowClean']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Clean Subtitles </a>');
 		\$("#SubMenu a:contains('Settings')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Settings </a>');
 		\$("#SubMenu a:contains('Provider')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Providers </a>');
 		\$("#SubMenu a:contains('General')").addClass('btn').html('<span class="ui-icon ui-icon-gear pull-left"></span> General </a>');
+		\$("#SubMenu a:contains('Manage Seedbox Downloads')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Manage Seedbox Downloads </a>');
 		\$("#SubMenu a:contains('Episode Status')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Episode Status Management </a>');
 		\$("#SubMenu a:contains('Missed Subtitle')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Missed Subtitles </a>');
 		\$("#SubMenu a[href='$sbRoot/home/addShows/']").addClass('btn').html('<span class="ui-icon ui-icon-video pull-left"></span> Add Show </a>');
@@ -204,6 +206,9 @@
                             #if $sickbeard.USE_SUBTITLES:
                             <li><a href="$sbRoot/manage/subtitleMissed/"><img src="$sbRoot/images/menu/backlog16.png" alt="" width="16" height="16" />Missed Subtitle Management</a></li>
                             #end if
+                            #if $sickbeard.SEEDBOX_DOWNLOAD_ENABLED:
+                            <li><a href="$sbRoot/manage/seedboxdownloads/"><img src="$sbRoot/images/menu/backlog16.png" alt="" width="16" height="16" />Manage Seedbox Downloads</a></li>
+                            #end if
                     </ul>
                 </li>                
                 <li id="NAVerrorlogs"><a href="$sbRoot/errorlogs/" class="log">$logPageTitle</a>
@@ -220,6 +225,7 @@
                             <li><a href="$sbRoot/config/providers/"><img src="$sbRoot/images/menu/config16.png" alt="" width="16" height="16" />Search Providers</a></li>
                             <li><a href="$sbRoot/config/subtitles/"><img src="$sbRoot/images/menu/config16.png" alt="" width="16" height="16" />Subtitles Settings</a></li>
                             <li><a href="$sbRoot/config/postProcessing/"><img src="$sbRoot/images/menu/config16.png" alt="" width="16" height="16" />Post Processing</a></li>
+                            <li><a href="$sbRoot/config/seedboxdownload/"><img src="$sbRoot/images/menu/config16.png" alt="" width="16" height="16" />Seedbox Download</a></li>
                             <li><a href="$sbRoot/config/notifications/"><img src="$sbRoot/images/menu/config16.png" alt="" width="16" height="16" />Notifications</a></li>
                     </ul>
                 </li>

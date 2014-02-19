@@ -1,0 +1,243 @@
+#import sickbeard
+#from sickbeard.providers.generic import GenericProvider
+#set global $title="Config - Seedbox Download"
+#set global $header="Seedbox Download"
+
+#set global $sbPath="../.."
+
+#set global $topmenu="config"#
+#import os.path
+#include $os.path.join($sickbeard.PROG_DIR, "data/interfaces/default/inc_top.tmpl")
+#if $varExists('header') 
+	<h1 class="header">$header</h1>
+#else 
+	<h1 class="title">$title</h1>
+#end if
+<script type="text/javascript" src="$sbRoot/js/configSeedboxDownload.js?$sbPID"></script>
+<script type="text/javascript" src="$sbRoot/js/config.js?$sbPID"></script>
+<script type="text/javascript" charset="utf-8">
+<!--
+\$(document).ready(function(){
+
+});
+//-->
+</script>
+
+<div id="config">
+<div id="config-content">
+
+<form id="configForm" action="saveSeedboxDownload" method="post">
+
+            <div id="config-components">
+                <ul>
+                    <li><a href="#core-component-group1">General Settings</a></li>
+                    
+                    <li><a href="#core-component-group2">Configure Transfer Protocol</a></li>
+                    
+                </ul>
+                
+                <div id="core-component-group1" class="component-group clearfix">
+
+                    <div class="component-group-desc">
+                        <h3>General Settings</h3>
+                        <p>This feature enables you to retrieve automatically the files you downloaded on a remote seedbox (or VPS) locally.</p>
+                        <p>Configure the general settings here.</p>
+                    </div>
+
+               <fieldset class="component-group-list">
+                        <div class="field-pair">
+                            <input type="checkbox" name="seedboxdownload_enabled" id="seedboxdownload_enabled" #if $sickbeard.SEEDBOX_DOWNLOAD_ENABLED == True then "checked=\"checked\"" else ""# />
+                            <label class="clearfix" for="seedboxdownload_enabled">
+                                <span class="component-title">Enable Seedbox Download</span>
+                                <span class="component-desc">If disabled, nothing will be done.</span>
+                            </label>
+                        </div>
+						
+						<div class="field-pair">
+                            <input type="checkbox" name="seedboxdownload_delete_remote_files" id="seedboxdownload_delete_remote_files" #if $sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES == True then "checked=\"checked\"" else ""# />
+                            <label class="clearfix" for="seedboxdownload_delete_remote_files">
+                                <span class="component-title">Delete files on Seedbox after successful transfer.</span>
+                                <span class="component-desc">Failed or incomplete transfer will leave the file intact on the seedbox. The removal is done when the download completes, and only if the file size matches locally and on the seedbox. Empty directories will be removed as well if they contained downloaded files.</span>
+                            </label>
+                        </div>
+
+						<div class="field-pair">
+                            <input type="checkbox" name="seedboxdownload_automove_in_postprocess_dir" id="seedboxdownload_automove_in_postprocess_dir" #if $sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR == True then "checked=\"checked\"" else ""# />
+                            <label class="clearfix" for="seedboxdownload_automove_in_postprocess_dir">
+                                <span class="component-title">Move downloaded files to Sickbeard post-process directory</span>
+                                <span class="component-desc">This should be enabled if you want to automate the whole process. Post-Process should be enabled as well. If disabled, files will stay in the landing directory. TODO : not implemented</span>
+                            </label>
+                        </div>
+                        						
+                        <div class="field-pair">
+                            <label class="nocheck clearfix">
+                                <span class="component-title">Check Frequency</span>
+                                <input type="text" name="seedboxdownload_check_frequency" value="$sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY" size="5" />
+                            </label>
+                            <label class="nocheck clearfix">
+                                <span class="component-title">&nbsp;</span>
+                                <span class="component-desc">Time in minutes between checks for new files on the seedbox.</span>
+                            </label>
+                        </div>
+                        
+                        
+                            <div class="field-pair">
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">Landing directory</span>
+                                    <input type="text" name="seedboxdownload_landing_dir" id="seedboxdownload_landing_dir" value="$sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR" size="35" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">The directory where Sick Beard will download the seedbox files, before moving them to the post-process directory (if enabled).</span>
+                                </label>
+                            </div>
+
+
+                        <div class="clearfix"></div>
+                        <input type="submit" class="btn config_submitter" value="Save Changes" /><br/>
+
+                    </fieldset>
+                </div><!-- /component-group1 //-->
+
+                
+                <div id="core-component-group2" class="component-group clearfix">
+
+                    <div class="component-group-desc">
+                        <h3>Configure Protocol Settings</h3>
+                    </div>
+                    
+                    <fieldset class="component-group-list">
+                        
+                        
+                        <div class="field-pair">
+                            <label class="clearfix" for="configured_protocol">
+                                <span class="component-title jumbo">Configure Protocol:</span>
+                                <span class="component-desc">
+                                    <select id="configured_protocol" name="configured_protocol">
+                                       
+                                            <option value="sftp">SFTP</option>
+                                        
+                                    </select>
+
+                                </span>
+                            </label>
+                        </div>
+
+
+
+                        
+                        
+                        <div class="protocolDiv" id="sftpDiv">
+                            
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">Seedbox address</span>
+                                    <input class="component-desc" type="text" name="sftp_remote_host" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">IP or DNS name of your seedbox.</span>
+                                </label>
+                            </div>
+
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">SFTP port</span>
+                                    <input class="component-desc" type="text" name="sftp_remote_port" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">Change this if your SSH daemon listens on a different port than the default (22).</span>
+                                </label>
+                            </div>
+
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">Login/Username</span>
+                                    <input class="component-desc" type="text" name="sftp_remote_user" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">The login/username that will be used to connect to your seedbox.</span>
+                                </label>
+                            </div>
+                            
+                            <div class="field-pair">
+                                <input type="checkbox" name="sftp_use_cert" id="sftp_use_cert" #if $sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT == True then "checked=\"checked\"" else ""# />
+                                <label class="clearfix" for="sftp_use_cert">
+                                    <span class="component-title">Use a certificate for authentication instead of password (recommended)</span>
+                                    <span class="component-desc">The use of a certificate is strongly advised over a password, as sickbeard will store the password unencrypted in its config files.</span>
+                                </label>
+                            </div>
+                            
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">Certificate file</span>
+                                    <input class="component-desc" type="text" id="sftp_remote_auth_key" name="sftp_remote_auth_key" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">The certificate file used for authentication. Can be empty if using a password.</span>
+                                </label>
+                            </div>
+                            
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">Password</span>
+                                    <input class="component-desc" type="text" name="sftp_remote_password" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">
+                                        The password used for authentication. Can be empty if using a password.<br>
+                                       <span style="color: #c90900;">
+                                            It will be stored in plain text in the config file and thus will be viewable by anyone.<br>
+                                            Use a password only if you don't care about it being known.
+                                       </span>
+                                    </span> 
+                                </label>
+                            </div>
+                            
+                            <div class="field-pair">
+                                <label class="clearfix">
+                                    <span class="component-title">Subdirectory to check</span>
+                                    <input class="component-desc" type="text" name="sftp_remote_root_dir" value="$sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR" size="40" />
+                                </label>
+                                <label class="nocheck clearfix">
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">
+                                        If empty, Sickbeard will scan and transfer all files found in the default current directory on SFTP connection.<br>
+                                        Change this if you want to limit Sickbeard actions to a specific subdirectory.<br>
+                                        This is recommended as the default directory is usually the home directory of the user and there are some files in it you might not want to transfer.</span>
+                                </label>
+                            </div>                            
+          <!--                   
+        #self.settings.protocol_settings.sftp_remote_auth_key=sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE
+ -->
+                            
+                        </div><!-- /sftpDiv //-->
+
+
+
+<!-- end div for editing protocols -->
+
+                        <input type="submit" class="btn config_submitter" value="Save Changes" /><br/>
+            
+                    </fieldset>
+                </div><!-- /component-group2 //-->
+
+ 
+            </div><!-- /config-components //-->
+
+</form>
+</div></div>
+<div class="clearfix"></div>
+<script type="text/javascript" charset="utf-8">
+<!--
+    jQuery('#config-components').tabs();
+    jQuery('#seedboxdownload_landing_dir').fileBrowser({ title: 'Select Landing Directory' });
+    jQuery('#sftp_remote_auth_key').fileBrowser({ title: 'Select Certificate File', hideFiles: 0 });
+
+//-->
+</script>
+#include $os.path.join($sickbeard.PROG_DIR,"data/interfaces/default/inc_bottom.tmpl")
