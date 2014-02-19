@@ -148,7 +148,7 @@ class SeedboxDownloader():
                 logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
 
                 # TODO : remove this line later when testing is over.   
-                self.downloads = []
+                #self.downloads = []
 
                 self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
     
@@ -268,16 +268,49 @@ class SeedboxDownloader():
                 
         return
 
-    # Logs stats to Sickbeard log file : total size, number of downloaded files, downloaded bytes until now...
+    # Returns an array of strings with all the global stats described.
+    def generate_global_stats_strings(self):
+        
+        results = []
+        
+        results.extend([u"Total files : %d (%s)" % (self.total_files,print_bytes(self.totalBytes))])
+        results.extend([u"Total downloaded files : %d (%s)" % (self.total_downloaded_files,print_bytes(self.total_downloaded_bytes))])
+        results.extend([u"Total files already present : %d (%s)" % (self.total_already_present_files,print_bytes(self.totalAlreadyPresentBytes))])
+        results.extend([u"Total files to download : %d (%s)" % (self.total_files_to_download,print_bytes(self.total_bytes_to_download))])
+        results.extend([u"Total files in download queue : %d" % (len(self.download_queue.queue))])
+        
+        return results
+
+    # Returns an array of strings with all the file stats described.
+    def generate_file_stats_strings(self):
+        
+        results = []
+        
+        for download in self.downloads:
+            
+            download_string = ""
+            if download.file_downloading:
+                percent_complete = 100 * download.transferred_bytes / download.file_size
+                bytes_left_string = print_bytes(download.file_size - download.transferred_bytes)
+                download_string = u"%s : Downloading (%d %% complete, size : %s, %s left)" % (download.remote_file_path, percent_complete, print_bytes(download.file_size), bytes_left_string)
+            elif download.file_already_present:
+                download_string = u"%s : Already present locally (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))                
+            elif download.file_downloaded:
+                download_string = u"%s : Downloaded (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))
+            else:
+                download_string = u"%s : Download queued (size : %s)" % (download.remote_file_path, print_bytes(download.file_size))
+            
+            results.extend([download_string])
+        
+        return results
+    
+    # Logs stats to Sickbeard log file  : total size, number of downloaded files, downloaded bytes until now...
     def log_download_stats(self):
         # TODO : complete later
-        logger.log(u"Total files : %d (%s)" % (self.total_files,print_bytes(self.totalBytes)), logger.MESSAGE)
-        logger.log(u"Total downloaded files : %d (%s)" % (self.total_downloaded_files,print_bytes(self.total_downloaded_bytes)), logger.MESSAGE)
-        logger.log(u"Total files already present : %d (%s)" % (self.total_already_present_files,print_bytes(self.totalAlreadyPresentBytes)), logger.MESSAGE)
-        logger.log(u"Total files to download : %d (%s)" % (self.total_files_to_download,print_bytes(self.total_bytes_to_download)), logger.MESSAGE)
-        logger.log(u"Total files in download queue : %d" % (len(self.download_queue.queue)), logger.MESSAGE)
-
         
+        for line in self.generate_global_stats_strings():
+            logger.log(line, logger.MESSAGE)
+            
         return
     
     # Called when Sickbeard is stopping itself.

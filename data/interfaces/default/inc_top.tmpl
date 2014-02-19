@@ -110,6 +110,7 @@
 		\$("#SubMenu a:contains('Settings')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Settings </a>');
 		\$("#SubMenu a:contains('Provider')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Providers </a>');
 		\$("#SubMenu a:contains('General')").addClass('btn').html('<span class="ui-icon ui-icon-gear pull-left"></span> General </a>');
+		\$("#SubMenu a:contains('Manage Seedbox Downloads')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Manage Seedbox Downloads </a>');
 		\$("#SubMenu a:contains('Episode Status')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Episode Status Management </a>');
 		\$("#SubMenu a:contains('Missed Subtitle')").addClass('btn').html('<span class="ui-icon ui-icon-transferthick-e-w pull-left"></span> Missed Subtitles </a>');
 		\$("#SubMenu a[href='$sbRoot/home/addShows/']").addClass('btn').html('<span class="ui-icon ui-icon-video pull-left"></span> Add Show </a>');
@@ -204,6 +205,9 @@
                             <li><a href="$sbRoot/manage/episodeStatuses/"><img src="$sbRoot/images/menu/backlog16.png" alt="" width="16" height="16" />Episode Status Management</a></li>
                             #if $sickbeard.USE_SUBTITLES:
                             <li><a href="$sbRoot/manage/subtitleMissed/"><img src="$sbRoot/images/menu/backlog16.png" alt="" width="16" height="16" />Missed Subtitle Management</a></li>
+                            #end if
+                            #if $sickbeard.SEEDBOX_DOWNLOAD_ENABLED:
+                            <li><a href="$sbRoot/manage/seedboxdownloads/"><img src="$sbRoot/images/menu/backlog16.png" alt="" width="16" height="16" />Manage Seedbox Downloads</a></li>
                             #end if
                     </ul>
                 </li>                

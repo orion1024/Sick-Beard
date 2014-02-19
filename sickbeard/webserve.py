@@ -160,6 +160,7 @@ ManageMenu = [
     { 'title': 'Manage Searches',           'path': 'manage/manageSearches'  },
     { 'title': 'Episode Status Management', 'path': 'manage/episodeStatuses' },
     { 'title': 'Manage Missed Subtitles',   'path': 'manage/subtitleMissed' },
+    { 'title': 'Manage Seedbox Downloads',   'path': 'manage/seedboxdownloads'}
 ]
 if sickbeard.USE_SUBTITLES:
     ManageMenu.append({ 'title': 'Missed Subtitle Management', 'path': 'manage/subtitleMissed' })
@@ -573,6 +574,19 @@ class Manage:
         t.root_dir_list = root_dir_list
         t.lang_value = last_lang_metadata if lang_all_same else None
         t.audio_value = last_lang_audio if lang_audio_all_same else None
+        return _munge(t)
+    
+    @cherrypy.expose
+    def seedboxdownloads(self):
+
+        t = PageTemplate(file="manage_seedboxdownloads.tmpl")
+        t.submenu = ManageMenu
+        
+        t.HTML_output = "Global stats<br><br>"
+        t.HTML_output = t.HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
+        t.HTML_output = t.HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
+        
+
         return _munge(t)
 
     @cherrypy.expose
