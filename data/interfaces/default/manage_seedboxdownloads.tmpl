@@ -22,6 +22,12 @@
     });
 });
 //-->
+
+mymeta=document.createElement('meta');
+mymeta.httpEquiv='refresh';
+mymeta.content='5';
+document.getElementsByTagName('head')[0].appendChild(mymeta);
+
 </script>
 
 #if $varExists('header') 

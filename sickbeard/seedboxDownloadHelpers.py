@@ -103,6 +103,7 @@ class SeedboxDownload():
         self.file_downloaded = False
         self.file_downloading = False
         self.file_moved = False
+        self.download_attempts = 0
         
         
         self.interrupt_asked = False
@@ -240,33 +241,33 @@ class SeedboxDownloaderProtocolWrapper():
                 #logger.log(u"List dir results (raw) : " + str(remote_filenames), logger.DEBUG)
                 
                 for remote_filename in remote_filenames:
-                    remoteFullPath = posixpath.normpath(posixpath.join(remote_dir, remote_filename))
-                    #logger.log(u"Getting stats for file " + str(remoteFullPath), logger.DEBUG)
+                    remote_full_path = posixpath.normpath(posixpath.join(remote_dir, remote_filename))
+                    #logger.log(u"Getting stats for file " + str(remote_full_path), logger.DEBUG)
                     
                     try:
-                        attr = self.sftp.stat(remoteFullPath)
+                        attr = self.sftp.stat(remote_full_path)
                     except IOError as io_exception:
-                        logger.log(u"Error while getting file info for %s (%s)" % (remoteFullPath, io_exception), logger.ERROR)
+                        logger.log(u"Error while getting file info for %s (%s)" % (remote_full_path, io_exception), logger.ERROR)
                     except EOFError as eof_exception:
                         logger.log(u"Error while getting file info for %s (%s)" % (remote_dir, eof_exception), logger.ERROR)
                     else:
                         # Directories are not listed themselves, but we do explore them if a recursive listing has been asked.
                         if stat.S_ISDIR(attr.st_mode):
                             if recursive:
-                                results.extend(self.list_dir(remoteFullPath, True, True))
+                                results.extend(self.list_dir(remote_full_path, True, True))
                                 
                         # Also checking that the file is a regular one.
                         elif stat.S_ISREG(attr.st_mode):
                             # Building local path out of the remote dir, the remote path and the landing directory.
                             
                             #logger.log(u"Stats retrieved : " + str(attr), logger.DEBUG)
-                            #logger.log(u"Building local path... remote_root_dir = <" + str(self.settings.sftp_remote_root_dir) + u">, remote_file_path = <" + str(remoteFullPath) + u">,landingDir = <" + str(self.settings.sftp_landing_dir)+u">", logger.DEBUG)
+                            #logger.log(u"Building local path... remote_root_dir = <" + str(self.settings.sftp_remote_root_dir) + u">, remote_file_path = <" + str(remote_full_path) + u">,landingDir = <" + str(self.settings.sftp_landing_dir)+u">", logger.DEBUG)
                             
-                            #local_file_path = os.path.normpath(os.path.join(self.settings.sftp_landing_dir, remoteFullPath.replace(re.escape(self.settings.sftp_remote_root_dir)+ "/","",1))
-                            local_file_path = os.path.normpath(os.path.join(self.settings.sftp_landing_dir, posixpath.relpath(remoteFullPath, self.settings.sftp_remote_root_dir)))
+                            #local_file_path = os.path.normpath(os.path.join(self.settings.sftp_landing_dir, remote_full_path.replace(re.escape(self.settings.sftp_remote_root_dir)+ "/","",1))
+                            local_file_path = os.path.normpath(os.path.join(self.settings.sftp_landing_dir, posixpath.relpath(remote_full_path, self.settings.sftp_remote_root_dir)))
                             #logger.log(u"LocalPath = <" + str(local_file_path) + u">", logger.DEBUG)
                             
-                            results.append(SeedboxDownload(remoteFullPath, local_file_path, remote_filename, attr.st_size))
+                            results.append(SeedboxDownload(remote_full_path, local_file_path, remote_filename, attr.st_size))
  
         return results
 
@@ -343,9 +344,9 @@ class SeedboxDownloaderProtocolWrapper():
                 try:
                     return self.sftp.size_match(remote_file_path, local_file_path)
                 except IOError as io_exception:
-                    logger.log(u"Error while comparing file %s with its local version (%s)" % (remoteFullPath, io_exception), logger.ERROR)
+                    logger.log(u"Error while comparing file %s with its local version (%s)" % (remote_file_path, io_exception), logger.ERROR)
                 except EOFError as eof_exception:
-                    logger.log(u"Error while comparing file %s with its local version (%s)" % (remote_dir, eof_exception), logger.ERROR)
+                    logger.log(u"Error while comparing file %s with its local version (%s)" % (remote_file_path, eof_exception), logger.ERROR)
  
                 return False
             else:
@@ -374,9 +375,9 @@ class SeedboxDownloaderProtocolWrapper():
             else:
                 return True
         except IOError as io_exception:
-            logger.log(u"Error while deleting remote file %s (%s)" % (remoteFullPath, io_exception), logger.ERROR)
+            logger.log(u"Error while deleting remote file %s (%s)" % (remote_file_path, io_exception), logger.ERROR)
         except EOFError as eof_exception:
-            logger.log(u"Error while deleting remote file %s (%s)" % (remote_dir, eof_exception), logger.ERROR)        
+            logger.log(u"Error while deleting remote file %s (%s)" % (remote_file_path, eof_exception), logger.ERROR)        
             
         return False
     

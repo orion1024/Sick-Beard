@@ -23,6 +23,7 @@ import time
 import sys
 import os
 import copy
+import threading
 
 import sickbeard
 from sickbeard import db, logger, common, exceptions, helpers
@@ -68,7 +69,58 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
             generic_queue.GenericQueue.add_item(self, item)
         else:
             logger.log(u"Not adding item, it's already in the queue or not the right type of object.", logger.DEBUG)
+            
+    def run(self):
 
+        # only start a new task if one isn't already going
+        if self.thread == None or self.thread.isAlive() == False:
+
+            # if the thread is dead then the current item should be finished
+            if self.currentItem != None:
+                
+                self.currentItem.finish()
+                
+                # We add the item back into the queue if it failed.
+                if self.currentItem.requeue_needed():
+                    self.add_item(self.currentItem)
+                    
+                self.currentItem = None
+
+            # if there's something in the queue then run it in a thread and take it out of the queue
+            if len(self.queue) > 0:
+
+                # sort by priority
+                def sorter(x,y):
+                    """
+                    Sorts by priority descending then time ascending
+                    """
+                    if x.priority == y.priority:
+                        if y.added == x.added:
+                            return 0
+                        elif y.added < x.added:
+                            return 1
+                        elif y.added > x.added:
+                            return -1
+                    else:
+                        return y.priority-x.priority
+
+                self.queue.sort(cmp=sorter)
+                
+                queueItem = self.queue[0]
+
+                if queueItem.priority < self.min_priority:
+                    return
+
+                # launch the queue item in a thread
+                # TODO: improve thread name
+                threadName = self.queue_name + '-' + queueItem.get_thread_name()
+                self.thread = threading.Thread(None, queueItem.execute, threadName)
+                self.thread.start()
+
+                self.currentItem = queueItem
+
+                # take it out of the queue
+                del self.queue[0]
 
 
 class DownloadQueueItem(generic_queue.QueueItem):
@@ -94,6 +146,8 @@ class DownloadQueueItem(generic_queue.QueueItem):
         self.success = False
         
         self.download.file_download_failed = False
+        
+        self.download.download_attempts = self.download.download_attempts + 1
 
         self.protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.protocol_wrapper_settings)
         
@@ -135,7 +189,12 @@ class DownloadQueueItem(generic_queue.QueueItem):
                 if removeSuccessful:
                     logger.log("Remove completed successfully for file %s" % (self.download.remote_file_path), logger.DEBUG)
                     # We also try to remove the parent directories. They will be removed only if empty, and we stop at the remote root directory.
-                    self.protocol_wrapper.delete_empty_dir(os.path.dirname(self.download.remote_file_path), recurse=True)  
+                    self.protocol_wrapper.delete_empty_dir(os.path.dirname(self.download.remote_file_path), recurse=True)
+    
+    # This method allows the queue to know if the item needs to be rescheduled.
+    def requeue_needed(self):    
+        return not self.success
+    
 
 
 
