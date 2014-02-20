@@ -204,11 +204,10 @@ class SeedboxDownloaderProtocolWrapper():
         return self.connected
 
     def disconnect(self):
-        # TODO : implement later. This function should be called only internally if necessary,s not by outside code. Objective is to keep the internal workings hidden from calling objects.
-
-        self.connected = False
         
-        return True
+        self.connected = False
+       
+        return
 
     # List all files in the given directory, and return a list of SeedBoxDownload objects. The files are tested for local existence in here too.
     def list_dir(self, remote_subdir="", recursive=False, recursive_call=False):
@@ -332,11 +331,6 @@ class SeedboxDownloaderProtocolWrapper():
         
         return download.file_downloaded
 
-    def get_dir(self, remote_dir, recurse=False):
-         # TODO : implement later. Same as get_file but for all files in specified directory
-
-        return True
-# TODO : use posix path for remote files. Use os.path wherever else
     def is_file_downloaded(self, remote_file_path, local_file_path):
 
         if os.path.exists(local_file_path):
@@ -360,11 +354,6 @@ class SeedboxDownloaderProtocolWrapper():
             self.sftp._sftp_connect()
         else:
             pass
-
-    def is_dir_downloaded(self, remote_dir, recurse=False):
-        # TODO : implement later. Same as is_file_downloaded but for all files in specified directory
-
-        return True
 
     def delete_file(self, remote_file_path):
         

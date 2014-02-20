@@ -60,9 +60,6 @@ class SeedboxDownloader():
         
         # Creating the wrappers to handle remote SFTP file operations.
         self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
-        # TODO : for the moment we use a wrapper for the queue. It isn't ideal if this one hangs. Should I just create a new wrapper when each file is downloading ?
-        # maybe pass on a wrapper setting object that allows the download object to rebuild a wrapper when its current one fails. Food for thought !
-        #self.queue_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)            
 
     
     # Reload settings from sickbeard configuration
@@ -150,16 +147,11 @@ class SeedboxDownloader():
                 
                 logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
 
-                # TODO : remove this line later when testing is over.   
+                # Uncomment to use for tests   
                 #self.downloads = []
 
                 self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
-    
-                # TODO : remove this line later when testing is over.
-                for download in self.downloads:
-                    if download.file_download_failed:
-                        logger.log(u"Failed download : %s (%s)." % (download.Name, download.file_download_error), logger.MESSAGE)
-                
+                  
                 self.add_new_downloads(new_downloads)
                 
                 if self.settings.automove_in_postprocess_dir:
@@ -314,8 +306,6 @@ class SeedboxDownloader():
     
     # Logs stats to Sickbeard log file  : total size, number of downloaded files, downloaded bytes until now...
     def log_download_stats(self):
-        # TODO : complete later
-        
         for line in self.generate_global_stats_strings():
             logger.log(line, logger.MESSAGE)
             
@@ -342,13 +332,13 @@ class SeedboxDownloader():
                 while self.download_queue.currentItem.download.file_downloading and wait_count < 10:
                     sleep(1)
                     wait_count = wait_count + 1
+                    
+            self.discover_protocol_wrapper.disconnect()
                 
         except:
             # as we are ending processes, we catch any exception and simply display it in the log.
             logger.log(u"Error while cleanup, when trying to move files to post-process directory : %s" % (sys.exc_info()[0]), logger.DEBUG)
         
-        
-        # TODO : close cleanly wrappers. Halt transfer ?
         
         return
 
