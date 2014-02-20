@@ -139,6 +139,9 @@ class SeedboxDownloader():
         # If feature is disabled, don't do anything
         if self.settings.enabled:
 
+            if not self.discover_protocol_wrapper.connected:
+                self.discover_protocol_wrapper.connect()
+
             if self.discover_protocol_wrapper.connected:
 
                 logger.log(u"Checking seedbox for files...", logger.MESSAGE)
@@ -201,11 +204,13 @@ class SeedboxDownloader():
                             download.file_moved = True
                             move_count = move_count + 1
                             logger.log(u"File %s successfully moved to post-process dir." % (download.Name), logger.DEBUG)
-                # TODO : remove empty dir
+                            # Now deleting parent folder if they are empty, up to the landing dir
+                            sickbeard.helpers.delete_empty_folders(os.path.dirname(download.local_file_path), sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR)
         else:
             logger.log(u"Post-process directory not found, not moving downloaded files into it. Directory is %s" % sickbeard.TV_DOWNLOAD_DIR, logger.ERROR)
         
-        logger.log(u"%d file(s) moved to post-process directory." % move_count, logger.MESSAGE)    
+        logger.log(u"%d file(s) moved to post-process directory." % move_count, logger.MESSAGE)
+        
         
         return
     
