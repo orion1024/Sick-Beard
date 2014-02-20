@@ -582,12 +582,17 @@ class Manage:
         t = PageTemplate(file="manage_seedboxdownloads.tmpl")
         t.submenu = ManageMenu
         
-        t.HTML_output = "Global stats<br><br>"
-        t.HTML_output = t.HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
-        t.HTML_output = t.HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
-        
-
         return _munge(t)
+
+    @cherrypy.expose
+    def seedboxdownloads_dynamiccontent(self, filler="", _=""):
+
+        HTML_output = "Global stats<br><br>"
+        HTML_output = HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
+        HTML_output = HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
+
+        return HTML_output
+
 
     @cherrypy.expose
     def massEditSubmit(self, paused=None, frenched=None, flatten_folders=None, quality_preset=False, subtitles=None,

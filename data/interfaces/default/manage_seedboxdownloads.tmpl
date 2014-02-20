@@ -20,13 +20,17 @@
 			\$('html,body').animate({scrollTop: \$("#show-"+id).offset().top -25},'slow');
         }
     });
+        
+    \$("#responsecontainer").load('/manage/seedboxdownloads_dynamiccontent?filler=hop');
+   var refreshId = setInterval(function() {
+      \$("#responsecontainer").load('/manage/seedboxdownloads_dynamiccontent?filler=hop');
+   }, 1000);
+   \$.ajaxSetup({ cache: false });
 });
 //-->
 
-mymeta=document.createElement('meta');
-mymeta.httpEquiv='refresh';
-mymeta.content='5';
-document.getElementsByTagName('head')[0].appendChild(mymeta);
+ 
+
 
 </script>
 
@@ -37,7 +41,8 @@ document.getElementsByTagName('head')[0].appendChild(mymeta);
 #end if
 
 
-$HTML_output
+<div id="responsecontainer">
+</div>
 
 
 
