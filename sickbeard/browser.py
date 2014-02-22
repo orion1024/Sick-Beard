@@ -21,6 +21,7 @@ import string
 import cherrypy
 
 from sickbeard import encodingKludge as ek
+from sickbeard import logger
 
 # use the built-in if it's available (python 2.6), if not use the included library
 try:
@@ -47,7 +48,7 @@ def getWinDrives():
     return drives
 
 
-def foldersAtPath(path, includeParent=False):
+def foldersAtPath(path, includeParent=False, hide_files=True):
     """ Returns a list of dictionaries with the folders contained at the given path
         Give the empty string as the path to list the contents of the root path
         under Unix this means "/", on Windows this will be a list of drive letters)
@@ -79,19 +80,35 @@ def foldersAtPath(path, includeParent=False):
     if path == parentPath and os.name == 'nt':
         parentPath = ""
 
-    fileList = [{ 'name': filename, 'path': ek.ek(os.path.join, path, filename) } for filename in ek.ek(os.listdir, path)]
-    fileList = filter(lambda entry: ek.ek(os.path.isdir, entry['path']), fileList)
-
+    fileList = [{ 'name': filename, 'path': ek.ek(os.path.join, path, filename), 'isdir' : os.path.isdir(ek.ek(os.path.join, path, filename)) } for filename in ek.ek(os.listdir, path)]
+        
     # prune out directories to proect the user from doing stupid things (already lower case the dir to reduce calls)
     hideList = ["boot", "bootmgr", "cache", "msocache", "recovery", "$recycle.bin", "recycler", "system volume information", "temporary internet files"] # windows specific
     hideList += [".fseventd", ".spotlight", ".trashes", ".vol", "cachedmessages", "caches", "trash"] # osx specific
     fileList = filter(lambda entry: entry['name'].lower() not in hideList, fileList)
 
-    fileList = sorted(fileList, lambda x, y: cmp(os.path.basename(x['name']).lower(), os.path.basename(y['path']).lower()))
+        
+     
+    # If files are hidden, filter the list then sort by name. if not, we don't filter and directories are sorted first.
+    if hide_files:
+        fileList = filter(lambda entry: ek.ek(os.path.isdir, entry['path']), fileList)
+        fileList = sorted(fileList, lambda x, y: cmp(os.path.basename(x['name']).lower(), os.path.basename(y['name']).lower()))
+    else:
+        # a lambda is not enough here
+        def sort_func (x, y):
+            if x['isdir'] == y['isdir']:
+                return cmp(os.path.basename(x['name']).lower(), os.path.basename(y['name']).lower())
+            else:
+                if x['isdir']:
+                    return -1
+                else:
+                    return 1
+        
+        fileList = sorted(fileList, sort_func)
 
     entries = [{'current_path': path}]
     if includeParent and parentPath != path:
-        entries.append({ 'name': "..", 'path': parentPath })
+        entries.append({ 'name': "..", 'path': parentPath, 'isdir' : True})
     entries.extend(fileList)
 
     return entries
@@ -100,9 +117,9 @@ def foldersAtPath(path, includeParent=False):
 class WebFileBrowser:
 
     @cherrypy.expose
-    def index(self, path=''):
+    def index(self, path='', hide_files=True):
         cherrypy.response.headers['Content-Type'] = "application/json"
-        return json.dumps(foldersAtPath(path, True))
+        return json.dumps(foldersAtPath(path, includeParent=True, hide_files=bool(int(hide_files))))
 
     @cherrypy.expose
     def complete(self, term):

@@ -159,7 +159,8 @@ ManageMenu = [
     { 'title': 'Backlog Overview',          'path': 'manage/backlogOverview' },
     { 'title': 'Manage Searches',           'path': 'manage/manageSearches'  },
     { 'title': 'Episode Status Management', 'path': 'manage/episodeStatuses' },
-	{ 'title': 'Manage Missed Subtitles',   'path': 'manage/subtitleMissed' },
+    { 'title': 'Manage Missed Subtitles',   'path': 'manage/subtitleMissed' },
+    { 'title': 'Manage Seedbox Downloads',   'path': 'manage/seedboxdownloads'}
 ]
 if sickbeard.USE_SUBTITLES:
     ManageMenu.append({ 'title': 'Missed Subtitle Management', 'path': 'manage/subtitleMissed' })
@@ -574,6 +575,24 @@ class Manage:
         t.lang_value = last_lang_metadata if lang_all_same else None
         t.audio_value = last_lang_audio if lang_audio_all_same else None
         return _munge(t)
+    
+    @cherrypy.expose
+    def seedboxdownloads(self):
+
+        t = PageTemplate(file="manage_seedboxdownloads.tmpl")
+        t.submenu = ManageMenu
+        
+        return _munge(t)
+
+    @cherrypy.expose
+    def seedboxdownloads_dynamiccontent(self, filler="", _=""):
+
+        HTML_output = "Global stats<br><br>"
+        HTML_output = HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
+        HTML_output = HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
+
+        return HTML_output
+
 
     @cherrypy.expose
     def massEditSubmit(self, paused=None, frenched=None, flatten_folders=None, quality_preset=False, subtitles=None,
@@ -835,6 +854,7 @@ ConfigMenu = [
     { 'title': 'Search Providers',  'path': 'config/providers/'        },
     { 'title': 'Subtitles Settings','path': 'config/subtitles/'        },
     { 'title': 'Post Processing',   'path': 'config/postProcessing/'   },
+    { 'title': 'Seedbox Download',   'path': 'config/seedboxdownload/'   },
     { 'title': 'Notifications',     'path': 'config/notifications/'    },
 ]
 
@@ -1486,6 +1506,93 @@ class ConfigProviders:
 
         redirect("/config/providers/")
 
+class ConfigSeedboxDownload:
+
+    @cherrypy.expose
+    def index(self):
+
+        t = PageTemplate(file="config_seedboxdownload.tmpl")
+        t.submenu = ConfigMenu
+        return _munge(t)
+        
+        
+    @cherrypy.expose
+    def saveSeedboxDownload (self, seedboxdownload_enabled = None, seedboxdownload_delete_remote_files = None, seedboxdownload_automove_in_postprocess_dir = None,
+                                    seedboxdownload_check_frequency = None, seedboxdownload_landing_dir = None, seedboxdownload_download_episodes_only = None,
+                                    configured_protocol=None,sftp_remote_host=None,sftp_remote_port=None,sftp_remote_root_dir=None,
+                                    sftp_remote_user=None,sftp_remote_auth_key=None,sftp_remote_password=None,
+                                    sftp_use_cert=None):
+
+        logger.log(u"Entering saveSeedboxDownload...", logger.DEBUG)
+            
+        results= []
+        
+        # General settings
+        
+        if seedboxdownload_enabled == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_ENABLED = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_ENABLED = 0
+            
+        if seedboxdownload_delete_remote_files == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_DELETE_REMOTE_FILES = 0
+            
+        if seedboxdownload_automove_in_postprocess_dir == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_AUTOMOVE_IN_POSTPROCESS_DIR = 0
+            
+        if seedboxdownload_download_episodes_only == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_DOWNLOAD_EPISODE_ONLY = 0
+            
+        try:
+            sickbeard.SEEDBOX_DOWNLOAD_CHECK_FREQUENCY = int(seedboxdownload_check_frequency)
+        except ValueError:
+            results.append("Invalid value for the check frequency, setting is unchanged.")
+        
+        if seedboxdownload_landing_dir and os.path.isdir(seedboxdownload_landing_dir):
+            sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR = seedboxdownload_landing_dir
+        else:
+            results.append("Landing directory does not exists, setting is unchanged.")
+
+        # Protocol settings
+        sickbeard.SEEDBOX_DOWNLOAD_PROTOCOL = configured_protocol
+        sickbeard.SEEDBOX_DOWNLOAD_SFTP_HOST = sftp_remote_host
+        try:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_PORT = int(sftp_remote_port)
+        except ValueError:
+            results.append("Invalid value for the remote SFTP port, setting is unchanged.")
+        sickbeard.SEEDBOX_DOWNLOAD_SFTP_REMOTE_ROOT_DIR = sftp_remote_root_dir
+        sickbeard.SEEDBOX_DOWNLOAD_SFTP_USERNAME = sftp_remote_user
+        sickbeard.SEEDBOX_DOWNLOAD_SFTP_CERT_FILE = sftp_remote_auth_key
+        sickbeard.SEEDBOX_DOWNLOAD_SFTP_PASSWORD = sftp_remote_password
+        
+        if sftp_use_cert == "on":
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT = 1
+        else:
+            sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT = 0
+
+   
+       
+        logger.log(u"Now saving seedbox settings...", logger.DEBUG)
+ 
+        sickbeard.save_config()
+        config.reload_seedbox_downloader_settings()
+
+        if len(results) > 0:
+            logger.log(u"Logging %d errors..." % len(results), logger.DEBUG)
+            for x in results:
+                logger.log(x, logger.ERROR)
+            ui.notifications.error('Error(s) Saving Configuration',
+                        '<br />\n'.join(results))
+        else:
+            ui.notifications.message('Configuration Saved', ek.ek(os.path.join, sickbeard.CONFIG_FILE) )
+
+        redirect("/config/seedboxdownload/")
 
 class ConfigNotifications:
 
@@ -2092,6 +2199,8 @@ class Config:
     notifications = ConfigNotifications()
 
     subtitles = ConfigSubtitles()
+    
+    seedboxdownload = ConfigSeedboxDownload()
 
 def haveXBMC():
     return sickbeard.USE_XBMC and sickbeard.XBMC_UPDATE_LIBRARY

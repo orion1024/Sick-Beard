@@ -10,7 +10,8 @@
 
     var fileBrowserDialog, currentBrowserPath, currentRequest = null;
 
-    function browse(path, endpoint) {
+
+    function browse(path, endpoint, hideFiles) {
 
         if (currentBrowserPath === path) {
             return;
@@ -24,7 +25,7 @@
 
         fileBrowserDialog.dialog('option', 'dialogClass', 'browserDialog busy');
 
-        currentRequest = $.getJSON(endpoint, { path: path }, function (data) {
+        currentRequest = $.getJSON(endpoint, { path: path, hide_files: hideFiles }, function (data) {
             fileBrowserDialog.empty();
             var first_val = data[0];
             var i = 0;
@@ -35,12 +36,26 @@
             $('<h1>').text(first_val.current_path).appendTo(fileBrowserDialog);
             list = $('<ul>').appendTo(fileBrowserDialog);
             $.each(data, function (i, entry) {
-                link = $("<a href='javascript:void(0)' />").click(function () { browse(entry.path, endpoint); }).text(entry.name);
-                $('<span class="ui-icon ui-icon-folder-collapsed"></span>').prependTo(link);
-                link.hover(
-                    function () {$("span", this).addClass("ui-icon-folder-open");    },
-                    function () {$("span", this).removeClass("ui-icon-folder-open"); }
-                );
+                if (entry.isdir) {
+                    if (hideFiles || entry.name == "..") {
+                        linkText = entry.name
+                    } else {
+                        linkText = "<DIR> " + entry.name
+                    }
+                    link = $("<a href='javascript:void(0)' />").click(function () { browse(entry.path, endpoint, hideFiles); }).text(linkText);
+                    
+                    $('<span class="ui-icon ui-icon-folder-collapsed"></span>').prependTo(link);
+                    link.hover(
+                        function () {$("span", this).addClass("ui-icon-folder-open");    },
+                        function () {$("span", this).removeClass("ui-icon-folder-open"); }
+                    );
+                    
+                } else {
+                    link = $("<a href='javascript:void(0)' />").click(function () { currentBrowserPath = entry.path; }).text(entry.name);                      
+                    $('<span class="ui-icon ui-icon-document"></span>').prependTo(link);
+                    //link = $("<a href='javascript:void(0)' />").click(function () { browse(entry.path, endpoint, hideFiles); }).text(entry.name);
+                }
+
                 link.appendTo(list);
             });
             $("a", list).wrap('<li class="ui-state-default ui-corner-all">');
@@ -66,8 +81,13 @@
                 modal:       true,
                 autoOpen:    false
             });
+        } else {
+            // Fixes the bug where the dialog title would stay the same even when the user opens several different dialog boxes in the row.
+            // we just update the title when the dialog already exists.
+            fileBrowserDialog.dialog('option', 'title', options.title);
         }
-
+        
+        
         // add the OK/Close buttons to the dialog
         fileBrowserDialog.dialog('option', 'buttons', {
             "Ok": function () {
@@ -87,7 +107,14 @@
         if (options.initialDir) {
             initialDir = options.initialDir;
         }
-        browse(initialDir, options.url);
+        
+        // If hideFiles isn't explicitely set to 0, we hide the files.
+        if (options.hideFiles != 0) {
+            browse(initialDir, options.url, 1);
+        } else {
+            browse(initialDir, options.url, 0);
+        }
+        
         fileBrowserDialog.dialog('open');
 
         return false;
