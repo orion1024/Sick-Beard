@@ -116,6 +116,9 @@ class SeedboxDownloader():
             if self.download_queue.is_download_paused():
                 logger.log(u"Seedbox download has been enabled, unpausing the download queue.", logger.MESSAGE)
                 self.download_queue.unpause_download()
+            # We run a new discovery if protocol settings were changed
+            if need_to_reload:
+                self.run()
         elif not self.download_queue.is_download_paused():
                 logger.log(u"Seedbox download has been disabled, pausing the download queue.", logger.MESSAGE)
                 self.download_queue.pause_download()
