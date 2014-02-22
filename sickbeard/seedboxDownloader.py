@@ -40,7 +40,6 @@ class SeedboxDownloader():
         
         # Initializing variables for handling transfers
         self.downloads = []
-        self.discover_protocol_wrapper = None
         #self.queue_protocol_wrapper = None
         
         
@@ -58,9 +57,6 @@ class SeedboxDownloader():
         self.settings = seedboxDownloadHelpers.SeedboxDownloaderSettings()
         self.reload_settings()
         
-        # Creating the wrappers to handle remote SFTP file operations.
-        self.discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
-
     
     # Reload settings from sickbeard configuration
     def reload_settings(self):
@@ -104,10 +100,7 @@ class SeedboxDownloader():
         self.settings.protocol_settings.sftp_landing_dir=sickbeard.SEEDBOX_DOWNLOAD_LANDING_DIR
         self.settings.protocol_settings.sftp_use_cert=sickbeard.SEEDBOX_DOWNLOAD_SFTP_USE_CERT
         
-        if need_to_reload and self.discover_protocol_wrapper: #and self.queue_protocol_wrapper:
-            self.discover_protocol_wrapper.connect()
-            #self.queue_protocol_wrapper.connect()
-       
+
         # TEMP
         #self.settings.protocol_settings.protocol="SFTP"
         #self.settings.protocol_settings.sftp_remote_host="localhost"
@@ -136,21 +129,22 @@ class SeedboxDownloader():
         # If feature is disabled, don't do anything
         if self.settings.enabled:
 
-            if not self.discover_protocol_wrapper.connected:
-                self.discover_protocol_wrapper.connect()
+            # Creating the wrappers to handle remote SFTP file operations.
+            discover_protocol_wrapper = seedboxDownloadHelpers.SeedboxDownloaderProtocolWrapper(self.settings.protocol_settings)
 
-            if self.discover_protocol_wrapper.connected:
+
+            if discover_protocol_wrapper.connected:
 
                 logger.log(u"Checking seedbox for files...", logger.MESSAGE)
                    
-                new_downloads = self.discover_protocol_wrapper.list_dir(recursive=True)   
+                new_downloads = discover_protocol_wrapper.list_dir(recursive=True)   
                 
                 logger.log(u"Got %d results. Computing stats..." % len(new_downloads), logger.MESSAGE)
 
                 # Uncomment to use for tests   
                 #self.downloads = []
 
-                self.discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
+                discover_protocol_wrapper.check_already_present_downloads(new_downloads)      
                   
                 self.add_new_downloads(new_downloads)
                 
@@ -160,8 +154,9 @@ class SeedboxDownloader():
                 
                 self.update_download_stats()
                 self.log_download_stats()
+                
             else:
-                logger.log(u"Not checking seedbox for files as there is no connection to the seedbox. Check your protocol settings or your state box state. Last attempt result was '%s'" % self.discover_protocol_wrapper.last_connect_result, logger.ERROR)
+                logger.log(u"Not checking seedbox for files as there is no connection to the seedbox. Check your protocol settings or your state box state. Last attempt result was '%s'" % discover_protocol_wrapper.last_connect_result, logger.ERROR)
             
         return          
 
@@ -332,8 +327,6 @@ class SeedboxDownloader():
                 while self.download_queue.currentItem.download.file_downloading and wait_count < 10:
                     sleep(1)
                     wait_count = wait_count + 1
-                    
-            self.discover_protocol_wrapper.disconnect()
                 
         except:
             # as we are ending processes, we catch any exception and simply display it in the log.
