@@ -35,9 +35,10 @@ from seedboxDownloadHelpers import print_bytes
 
 class SeedboxDownloadQueue(generic_queue.GenericQueue):
     
-    def __init__(self):
+    def __init__(self, queue_callback=None):
         generic_queue.GenericQueue.__init__(self)
         self.queue_name = "SEEDBOXDOWNLOADQUEUE"
+        self.queue_callback = queue_callback
 
     def is_in_queue(self, item):
         for cur_item in self.queue:
@@ -80,6 +81,10 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
                 
                 self.currentItem.finish()
                 
+                # Callback method with the current item, telling it we finished an item.
+                if self.queue_callback != None:
+                    self.queue_callback(finished=True, queueItem = self.currentItem)
+                
                 # We add the item back into the queue if it failed.
                 if self.currentItem.requeue_needed():
                     self.add_item(self.currentItem)
@@ -118,6 +123,10 @@ class SeedboxDownloadQueue(generic_queue.GenericQueue):
                 self.thread.start()
 
                 self.currentItem = queueItem
+                
+                # Callback method with the current item, telling it we started an item.
+                if self.queue_callback != None:
+                    self.queue_callback(finished=False, queueItem = self.currentItem)
 
                 # take it out of the queue
                 del self.queue[0]

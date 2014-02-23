@@ -33,6 +33,18 @@ import seedboxDownload_queue
 import seedboxDownloadHelpers
 from seedboxDownloadHelpers import print_bytes
 
+# TODO list for v1
+# - make UI to check downloads better
+
+# TODO list for v2
+# - FTPS support
+# - FTP support
+# - check protocol settings button
+# - parallel downloads for the queue
+# - record and display current and averagespeed
+# - make transfer callback handled by queue items rather than downlads objects, which should stay as "inanimate" objects
+
+
 # This class will populate the download queue, primarily by using the protocol wrapper to list remote files to be downloaded.
 class SeedboxDownloader():
     
@@ -43,7 +55,7 @@ class SeedboxDownloader():
         #self.queue_protocol_wrapper = None
         
         
-        self.download_queue = seedboxDownload_queue.SeedboxDownloadQueue()
+        self.download_queue = seedboxDownload_queue.SeedboxDownloadQueue(self.queue_callback)
         
         # Initializing stats variables
         self.total_files = 0
@@ -307,6 +319,14 @@ class SeedboxDownloader():
         for line in self.generate_global_stats_strings():
             logger.log(line, logger.MESSAGE)
             
+        return
+    
+    # Called when a queue item was started or finished.
+    def queue_callback(self, finished, queueItem):
+        
+        # For now we only update the global stats.
+        self.update_download_stats()
+        
         return
     
     # Called when Sickbeard is stopping itself.
