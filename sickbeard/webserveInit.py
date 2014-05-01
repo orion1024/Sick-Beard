@@ -96,6 +96,7 @@ def initWebServer(options = {}):
                         'log.screen':         False,
                         'error_page.401':     http_error_401_hander,
                         'error_page.404':     http_error_404_hander,
+                        'request.show_tracebacks': True, 
         }
 
         if enable_https:

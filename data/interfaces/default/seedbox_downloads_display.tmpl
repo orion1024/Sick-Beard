@@ -1,0 +1,399 @@
+#import sickbeard
+#import datetime
+
+#set $show_message=''
+
+#if $show_message:
+    <div id="show_message" class="ui-corner-all">$show_message</div>
+#end if
+
+        <link rel="shortcut icon" href="$sbRoot/images/ico/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="$sbRoot/images/ico/apple-touch-icon-144x144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="$sbRoot/images/ico/apple-touch-icon-114x114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="$sbRoot/images/ico/apple-touch-icon-72x72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="$sbRoot/images/ico/apple-touch-icon-57x57-precomposed.png">
+
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/default.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/browser.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/comingEpisodes.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/config.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/jquery.pnotify.default.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/jquery-ui-1.8.17.custom.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/superfish.css?$sbPID" />
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/tablesorter.css?$sbPID"/>
+    <link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/jquery.qtip2.css?$sbPID"/>
+	<link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/ui.jqgrid.css?$sbPID"/>
+	
+
+    
+    <link rel="stylesheet" type="text/css" media="only screen and (max-device-width: 480px)" href="$sbRoot/css/iphone.css?$sbPID" />
+	
+	<link rel="stylesheet" type="text/css" href="$sbRoot/css/lib/bootstrap/css/bootstrap.css?$sbPID" />
+
+
+<style type="text/css">
+<!--
+.sf-sub-indicator { background: url("$sbRoot/images/arrows.png") no-repeat -10px -100px; }
+.sf-shadow ul { background: url("$sbRoot/images/shadow.png") no-repeat bottom right; }
+#if $sickbeard.NEWEST_VERSION_STRING:
+.ui-pnotify { top: 30px !important; }
+#end if
+//--> 
+</style>
+
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery-1.8.3.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery-ui-1.8.24.custom.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/superfish-1.4.8.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/supersubs-0.2b.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.cookie.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.cookiejar.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.json-2.2.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.selectboxes.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.tablesorter-2.1.19.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.tablesorter.widgets.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.qtip-2012-04-26.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.pnotify-1.0.2.min.js"></script>
+	<script type="text/javascript" src="$sbRoot/js/lib/jquery.expand-1.3.8.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.form-2.92.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.jqGrid.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.tooltip.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.stickytableheader.js?$sbPID"></script>
+	<script type="text/javascript" src="$sbRoot/js/script.js?$sbPID"></script>
+
+	    
+    
+
+	<script type="text/javascript" src="$sbRoot/css/lib/bootstrap/js/bootstrap.js?$sbPID"></script>
+	
+    <script type="text/javascript" charset="utf-8">
+    <!--
+        sbRoot = "$sbRoot"; // needed for browser.js & ajaxNotifications.js
+        //HTML for scrolltopcontrol, which is auto wrapped in DIV w/ ID="topcontrol"
+        top_image_html = '<img src="$sbRoot/images/top.gif" style="width:31px; height:11px" alt="Jump to top" />'; 
+    //-->
+    </script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery.scrolltopcontrol-1.1.js"></script>
+    <script type="text/javascript" src="$sbRoot/js/browser.js"></script>
+    <script type="text/javascript" src="$sbRoot/js/ajaxNotifications.js"></script>
+    
+    
+
+
+<script type="text/javascript" charset="utf-8">
+<!--
+	
+
+\$(document).ready(function(){ 
+
+
+	
+});
+
+//-->
+</script>
+
+<div style="clear:left;padding-top:5px;">
+	<table id="DownloadList" class="stickyTable"></table>
+</div>
+
+<script type="text/javascript">
+
+function setPbDl(download, snatch, total){
+
+	var pourcDownload = Math.round(((parseInt(download) * 100) / parseInt(total)));
+	var pourcSnatched = Math.round(((parseInt(snatch) * 100) / parseInt(total)));
+
+	var StringDL = "";
+	var StringSn = "";
+
+	if(pourcDownload < 1){
+		StringDl = "000";
+	}else if(pourcDownload < 10){
+		StringDl = "00" + pourcDownload;
+	}else if(pourcDownload < 100){
+		StringDl = "0" + pourcDownload;
+	}else{
+		StringDl = "100";
+	}
+
+	if(pourcSnatched < 1){
+		StringSn = "000";
+	}else if(pourcSnatched < 10){
+		StringSn = "00" + pourcSnatched;
+	}else if(pourcSnatched < 100){
+		StringSn = "0" + pourcSnatched;
+	}else{
+		StringSn = "100";
+	}
+
+	return StringDl + "" + StringSn;
+}
+function setPbFr(fr, st, total){
+	return setPbDl(fr,st,total);
+}
+
+function createDownloadBar(percent_complete){
+
+	var pourcDownload = parseInt(percent_complete) +"%;";
+	var pourcSnatched = "0%;";
+	var pourcWanted   = "0%;";
+
+
+	var AddStyleWarning = "";
+	var AddStyleSuccess = "";
+	var AddStyleError   = "";
+	var txtDownload = "";
+	
+	
+	if ( parseInt(percent_complete) != 0) {
+		AddStyleSuccess = "-moz-border-radius:10px 0px 0px 10px;-webkit-border-radius:10px 0px 0px 10px;border-radius:10px 0px 0px 10px;";
+    }
+//	if (parseInt(download) != 0 && parseInt(wanted) != 0 ) {
+//		AddStyleWarning = "-moz-border-radius:0px 0px 0px 0px;-webkit-border-radius:0px 0px 0px 0px;border-radius:0px 0px 0px 0px;";
+//    }
+//	if (parseInt(download) != 0 && parseInt(wanted) == 0 ) {
+//			AddStyleWarning = "-moz-border-radius:0px 10px 10px 0px;-webkit-border-radius:0px 10px 10px 0px;border-radius:0px 10px 10px 0px;";
+//    }
+//	if (parseInt(download) == 0 && parseInt(wanted) != 0 ) {
+//			AddStyleWarning = "-moz-border-radius:10px 0px 0px 10px;-webkit-border-radius:10px 0px 0px 10px;border-radius:10px 0px 0px 10px;";
+//    }
+//	if ((parseInt(snatched)+parseInt(download)) != 0) {
+//		AddStyleError = "-moz-border-radius:0px 10px 10px 0px;-webkit-border-radius:0px 10px 10px 0px;border-radius:0px 10px 10px 0px;";
+//    }
+
+    	txtDownload = parseInt(percent_complete) + " %";
+
+	
+
+
+	return "<div class=\"progress ui-progressbar ui-widget-header qTip\"  style=\"position:relative;\">" +
+    	   "<div class=\"bar bar-success\" style=\"width:"+ pourcDownload +AddStyleSuccess+"\" ></div>"+
+    		"<div class=\"bar bar-warning\" style=\"width:"+ pourcSnatched +AddStyleWarning+"\" ></div>"+
+    		"<div class=\"bar bar-danger\" style=\"width:"+ pourcWanted +AddStyleError+"\" ></div>"+
+    		"<div class=\"progressbarText\">" + txtDownload +"</div>"+
+    	"</div>" /*+
+    	"<div id=\"tipnew_progressbarshow_"+ tvID +"\" style=\"display:none\" >"+
+    		"<div style=\"width:115px;\">"+
+	    		"<div style=\"font-size:10px;\">"+
+		    		"<div>"+
+		    			"<span>Downloaded</span><span style=\"float:right;\"> "+ download +"</span>"+
+		    		"</div>"+
+		    		"<div>"+
+		    			"<span>Snatched</span><span style=\"float:right;\"> "+ snatched +"</span>"+
+		    		"</div>"+
+		    		"<div>"+
+		    			"<span>Wanted</span><span style=\"float:right;\"> "+ wanted +"</span>"+
+		    		"</div>"+
+		    		"<div>"+
+		    			"<span>Missing</span><span style=\"float:right;\"> "+ parseInt(parseInt(total)-(parseInt(download)+parseInt(snatched)+parseInt(wanted))) +"</span>"+
+		    		"</div>"+
+		    		"<div>"+
+		    			"<span>Total</span><span style=\"float:right;\"> "+ total +"</span>"+
+		    		"</div>"+
+				"</div>"+
+    		"</div>"+
+    	"</div>";*/
+}
+
+$downloads_tableinfo
+// Building an object with information on all downloads
+	var dataTable = [
+#for $download_info in $downloads_tableinfo:
+
+	{
+		name : "$download_info.name",
+                status: "$download_info.status",
+                attempts: "$download_info.attempts",
+                last_attempt_result: "$download_info.last_attempt_result",
+                current_speed: "$download_info.current_speed",
+                average_speed: "$download_info.average_speed",
+                ETA: "$download_info.ETA",
+                transfer_left: "$download_info.transfer_left",
+		percent_complete : "$download_info.percent_complete"	
+	},
+
+#end for
+
+	];
+	
+	var grid = jQuery("#DownloadList").jqGrid(
+						{ 
+							datatype: "local", 
+							altRows: true,
+							altclass: 'odd',
+							height: '100%',
+							colNames:[
+								'File Name',
+								'Status',
+                                                                'Progress',
+                                                                'ETA',
+                                                                'Left to download',
+                                                                'Current speed',
+                                                                'Avg speed',
+                                                                'Nb of attempts',
+                                                                'Last attempt result'], 
+							colModel:
+								[
+                                                                 {name:'name',index:'name',align:"center",search:false, sortable:true,
+									sorttype: function (cellValue) {
+        								return cellValue == "" ? "9999-99-99": cellValue}},
+								{name:'status',index:'status',width:115, sortable:true, align:"center",search:false},
+                                                                {name:'percent_complete',index:'percent_complete',width:200, align:"right",sorttype:"int",align:"center",search:false,title:false,
+									formatter:function(cellvalue,option,rowObject){
+										return createDownloadBar(rowObject.percent_complete);
+									}
+								},
+								{name:'ETA',index:'ETA',align:"center",search:false},
+								{name:'transfer_left',index:'transfer_left',align:"center",search:false},
+								{name:'current_speed',index:'current_speed',align:"center",search:false},
+								{name:'average_speed',index:'average_speed',align:"center",search:false},
+								{name:'attempts',index:'attempts',align:"center",search:false},
+								{name:'last_attempt_result',index:'last_attempt_result',align:"center",search:false}
+
+								 ],
+							autowidth: true,
+							ignoreCase:true,
+							rowNum:10000,
+						});
+
+	for(var i=0;i<=dataTable.length;i++){
+		jQuery("#DownloadList").jqGrid('addRowData',i+1,dataTable[i]);
+	}
+			
+	jQuery("#DownloadList").jqGrid('filterToolbar',{searchOnEnter : false,closeOnEscape: true,});
+	\$("#Search_btn").click(function(){
+		grid[0].clearToolbar();
+		grid[0].toggleToolbar();
+		
+		if(\$(".ui-search-toolbar").attr("disp") == "yes"){
+            \$(".ui-jqgrid-bdiv").css("padding-top","0px"); 
+            \$(".ui-search-toolbar").attr("disp","no");
+		}else{
+            \$(".ui-jqgrid-bdiv").css("padding-top","35px"); 
+            \$(".ui-search-toolbar").attr("disp","yes");
+		}
+		
+
+	});
+	grid[0].toggleToolbar();
+
+	ResizeHeaders();
+	
+	jQuery("#DownloadList").stickyTableHeaders();
+	
+	function saveGridToCookie(name) {
+	
+		var grid = jQuery("#" + name);
+		var gridInfo = new Object();
+		name = name + window.location.pathname;
+		gridInfo.sortname = grid.jqGrid('getGridParam', 'sortname');
+		gridInfo.sortorder = grid.jqGrid('getGridParam', 'sortorder');
+		grid.sortwidth = grid.jqGrid('getGridParam','width');
+		$.cookie(name, $.toJSON(gridInfo));
+	}
+	function loadGridFromCookie(name) {
+		var c = $.cookie(name + window.location.pathname);
+		if (c == null)
+		return;
+		var gridInfo = $.parseJSON(c);
+		var grid = jQuery("#" + name);
+		grid.jqGrid('setGridParam', { sortorder: gridInfo.sortorder });
+		grid.sortGrid(gridInfo.sortname,true);
+		
+		grid.jqGrid('setGridParam',{width:grid.sortwidth});
+		
+		grid.trigger("reloadGrid");
+	}
+	
+	\$(window).unload(function() {
+		saveGridToCookie("DownloadList");
+	});
+	
+	loadGridFromCookie("DownloadList");
+	
+	
+	\$(".qTip").each(function(){
+		\$(this).qtip({
+	   		content : \$("#tipnew_progressbar"+\$(this).attr("tvID")).html(),
+	   		position : {
+	   			at : "top center",
+	   			my : "bottom center"
+	   		},
+	   		style : {
+	   			classes : 'ui-tooltip-jtools',
+	   			tip : {
+	   				corner : false,
+	   				width : 24
+	   			}
+	   		}
+	   	});
+	});
+	
+	
+	
+	
+	function UpdateTableHeaders() {
+	   \$(".ui-jqgrid.ui-widget.ui-widget-content").each(function() {
+	   
+	   	    var visi = "visible";
+	   	   
+			if((navigator.userAgent.match(/iPhone/i))||(navigator.userAgent.match(/iPod/i))||(navigator.userAgent.match(/Android/i))||(navigator.userAgent.match(/Safari/i))){
+				var visi = "none";
+			}else{
+		   
+		       var el             = \$(this),
+		           offset         = el.offset(),
+		           scrollTop      = \$(window).scrollTop(),
+		           floatingHeader = \$(".floatingHeader", this)
+		       
+		       if ((scrollTop > offset.top) && (scrollTop < offset.top + el.height())) {
+		           floatingHeader.css({
+		            "visibility": visi,
+		            "top" : "0px",
+		            "z-index" : "1000"
+		           });
+		       } else {
+		           floatingHeader.css({
+		           	"top" : offset.top - scrollTop + "px",
+		            "visibility": visi,
+		            "z-index" : "2"
+		           });      
+		       };
+		    }
+	   });
+	}
+
+	// DOM Ready      
+	\$(function() {
+	
+	   var clonedHeaderRow;
+	
+	   \$(".ui-jqgrid.ui-widget.ui-widget-content").each(function() {
+			   clonedHeaderRow = \$(".ui-state-default.ui-jqgrid-hdiv", this);
+		       clonedHeaderRow
+		         .before(clonedHeaderRow.clone())
+		         .css("width", clonedHeaderRow.width())
+		         .addClass("floatingHeader");
+	   });
+	   
+	   \$(window)
+	    .scroll(UpdateTableHeaders)
+	    .trigger("scroll");
+	   
+	});
+	
+	
+	window.onresize = function(event) {
+        ResizeHeaders();
+    }
+	
+	function ResizeHeaders() {
+		jQuery("#DownloadList").setGridWidth(\$("#gbox_" + "DownloadList").parent().width());
+        \$(".ui-state-default.ui-jqgrid-hdiv").css("width",\$(".ui-state-default.ui-jqgrid-hdiv.floatingHeader").css("width"));
+	}
+	
+	
+</script>
+
+
+<script type="text/javascript" src="$sbRoot/js/tableClick.js?$sbPID"></script>

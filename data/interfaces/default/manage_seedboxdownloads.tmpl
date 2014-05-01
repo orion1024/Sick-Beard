@@ -20,12 +20,31 @@
 			\$('html,body').animate({scrollTop: \$("#show-"+id).offset().top -25},'slow');
         }
     });
+
+    startRefresh();
+   
+   function startRefresh() {
+        \$.get('/manage/seedboxdownloads_dynamiccontent2?filler=hop', function(data) {
+            
+                    //if (\$('#responsecontainer1')[0].style.display == 'none') {
+                         \$('#responsecontainer1').html(data);
+                         //\$('#responsecontainer2')[0].style.display='none'
+                         //\$('#responsecontainer1')[0].style.display='inline'
+                         
+                    //} else {
+                         \$('#responsecontainer2').html(data);
+                         //\$('#responsecontainer1')[0].style.display='none'
+                         //\$('#responsecontainer2')[0].style.display='inline'
+                    //}
+                      
+                    });
         
-    \$("#responsecontainer").load('/manage/seedboxdownloads_dynamiccontent?filler=hop');
-   var refreshId = setInterval(function() {
-      \$("#responsecontainer").load('/manage/seedboxdownloads_dynamiccontent?filler=hop');
-   }, 1000);
+                setTimeout(startRefresh,3000);
+    }
+   
    \$.ajaxSetup({ cache: false });
+   
+
 });
 //-->
 
@@ -40,10 +59,13 @@
 	<h1 class="title">$title</h1>
 #end if
 
-
-<div id="responsecontainer">
+1
+<div id="responsecontainer1" style="display:inline">
 </div>
-
+2
+<div id="responsecontainer2" style="display:inline">
+</div>
+3
 
 
 #include $os.path.join($sickbeard.PROG_DIR, "data/interfaces/default/inc_bottom.tmpl")

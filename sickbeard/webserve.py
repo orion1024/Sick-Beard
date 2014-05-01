@@ -593,6 +593,58 @@ class Manage:
 
         return HTML_output
 
+    @cherrypy.expose
+    def seedboxdownloads_dynamiccontent2(self, filler="", _=""):
+
+        t = PageTemplate(file="seedbox_downloads_display.tmpl")
+        
+        seedbox_downloader = sickbeard.autoSeedboxDownloaderScheduler.action
+        
+        t.downloads_tableinfo = []
+        for download in seedbox_downloader.downloads:
+            
+            download_info = {}
+            download_info['name'] = download.Name
+            download_info['attempts'] = download.download_attempts
+            download_info['last_attempt_result'] = download.file_download_error
+            
+            
+            download_info['transfer_left'] = "-"
+            download_info['transferred_bytes'] = "-"
+            download_info['file_size'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.file_size)
+            
+            
+            # TODO : speeds
+            download_info['current_speed'] = ""
+            download_info['average_speed'] = ""
+            download_info['ETA'] = ""
+        
+            if download.file_downloading:
+            
+                download_info['transfer_left'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.file_size - download.transferred_bytes)
+                download_info['transferred_bytes'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.transferred_bytes)
+                download_info['percent_complete'] = 100 * download.transferred_bytes / download.file_size
+                download_info['status'] = "Downloading"
+                
+            elif download.file_already_present:
+                
+                download_info['percent_complete'] = 100
+                download_info['status'] = "Already there"
+                
+            elif download.file_downloaded:
+                
+                download_info['percent_complete'] = 100
+                download_info['status'] = "Downloaded"
+            else:
+                
+                download_info['percent_complete'] = 0
+                download_info['status'] = "Queued"
+            
+            t.downloads_tableinfo.append(download_info)
+            
+            pass
+
+        return _munge(t)
 
     @cherrypy.expose
     def massEditSubmit(self, paused=None, frenched=None, flatten_folders=None, quality_preset=False, subtitles=None,
