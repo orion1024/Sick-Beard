@@ -61,8 +61,10 @@ __version__ = "1.12.1"
 __version_info__ = tuple([ int(d) for d in __version__.split(".") ])
 __license__ = "GNU Lesser General Public License (LGPL)"
 
+# Testing to resolve circular import issues
+#from transport import SecurityOptions, Transport
+import transport
 
-from transport import SecurityOptions, Transport
 from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile

@@ -55,7 +55,7 @@ class Connection(object):
 
         # Begin the SSH transport.
         self._transport_live = False
-        self._transport = paramiko.Transport((host, port))
+        self._transport = paramiko.transport.Transport((host, port))
         self._transport_live = True
         self._ssh = paramiko.SSHClient()
         self._ssh.load_system_host_keys()
