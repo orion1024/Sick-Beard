@@ -15,21 +15,6 @@ import os
 import tempfile
 import paramiko
 
-#try:
-#    modpath = paramiko.__file__
-#except AttributeError:
-#    sys.exit('Module does not have __file__ defined.')
-#    # It's a script for me, you probably won't want to wrap it in try..except
-#
-## Turn pyc files into py files if we can
-#if modpath.endswith('.pyc') and os.path.exists(modpath[:-1]):
-#    modpath = modpath[:-1]
-#
-## Sort out symlinks
-#modpath = os.path.realpath(modpath)
-#
-#sys.exit('Module file is' + modpath)
-
 from contextlib import contextmanager
 
 __version__ = "$Rev$"
