@@ -1,0 +1,71 @@
+#import sickbeard
+#import datetime
+#from sickbeard.common import *
+#set global $title="Seedbox Download Overview"
+#set global $header="Seedbox Download Overview"
+
+#set global $sbPath=".."
+
+#set global $topmenu="manage"#
+#import os.path
+#include $os.path.join($sickbeard.PROG_DIR, "data/interfaces/default/inc_top.tmpl")
+
+<script type="text/javascript">
+<!--
+\$(document).ready(function() 
+{ 
+	\$('#pickShow').change(function(){
+		var id = \$(this).val();
+		if (id)  {
+			\$('html,body').animate({scrollTop: \$("#show-"+id).offset().top -25},'slow');
+        }
+    });
+
+   // startRefresh();
+   
+   function startRefresh() {
+        \$.get('/manage/seedboxdownloads_dynamiccontent2?filler=hop', function(data) {
+            
+                    //if (\$('#responsecontainer1')[0].style.display == 'none') {
+                         \$('#responsecontainer1').html(data);
+                         //\$('#responsecontainer2')[0].style.display='none'
+                         //\$('#responsecontainer1')[0].style.display='inline'
+                         
+                    //} else {
+                         \$('#responsecontainer2').html(data);
+                         //\$('#responsecontainer1')[0].style.display='none'
+                         //\$('#responsecontainer2')[0].style.display='inline'
+                    //}
+                      
+                    });
+        
+                setTimeout(startRefresh,3000);
+    }
+   
+   \$.ajaxSetup({ cache: false });
+   
+
+});
+//-->
+
+ 
+
+
+</script>
+
+#if $varExists('header') 
+	<h1 class="header">$header</h1>
+#else 
+	<h1 class="title">$title</h1>
+#end if
+
+1
+<div id="responsecontainer1" style="display:inline">
+</div>
+2
+<div id="responsecontainer2" style="display:inline">
+</div>
+3
+
+
+#include $os.path.join($sickbeard.PROG_DIR, "data/interfaces/default/inc_bottom.tmpl")

@@ -587,10 +587,108 @@ class Manage:
     @cherrypy.expose
     def seedboxdownloads_dynamiccontent(self, filler="", _=""):
 
-        HTML_output = "Global stats<br><br>"
-        HTML_output = HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
-        HTML_output = HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
+        HTML_output = "<br><br>"
+        
+        #HTML_output = HTML_output + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_global_stats_strings()))
+        #HTML_output = HTML_output + "<br><br>Download status per file :<br><br>" + ("<br>".join(sickbeard.autoSeedboxDownloaderScheduler.action.generate_file_stats_strings()))
 
+        seedbox_downloader = sickbeard.autoSeedboxDownloaderScheduler.action
+
+         
+        HTML_output = HTML_output + u"""
+            <div class="download_table">
+            <table>
+                <tr>
+                <td>Total files</td>
+                <td>Total downloaded files</td>
+                <td>Total files already present</td>
+                <td>Total files to download</td>
+                <td>Total files in download queue</td>
+                </tr>
+                <tr>
+                <td>%d (%s)</td>
+                <td>%d (%s)</td>
+                <td>%d (%s)</td>
+                <td>%d (%s)</td>
+                <td>%d</td>
+                </tr>
+            </table>
+            </div>
+        """ % (seedbox_downloader.total_files, sickbeard.seedboxDownloadHelpers.print_bytes(seedbox_downloader.totalBytes),
+               seedbox_downloader.total_downloaded_files, sickbeard.seedboxDownloadHelpers.print_bytes(seedbox_downloader.total_downloaded_bytes),
+               seedbox_downloader.total_already_present_files, sickbeard.seedboxDownloadHelpers.print_bytes(seedbox_downloader.totalAlreadyPresentBytes),
+               seedbox_downloader.total_files_to_download, sickbeard.seedboxDownloadHelpers.print_bytes(seedbox_downloader.total_bytes_to_download),
+               len(seedbox_downloader.download_queue.queue))
+        
+        HTML_output = HTML_output + "<br><br><br><br>"
+        
+        HTML_output = HTML_output + """
+            <div class="download_table">
+            <table>
+                <tr>
+                <td>Name</td>
+                <td>Status</td>
+                <td>Percent</td>
+                <td>Size</td>
+                <td>Downloaded</td>
+                <td>Attempts</td>
+                <td>Last Attempt</td>
+                </tr>
+        """
+        
+        for download in seedbox_downloader.downloads:
+            
+            download_info = {}
+            download_info['name'] = download.Name
+            download_info['attempts'] = download.download_attempts
+            download_info['last_attempt_result'] = download.file_download_error
+            
+            
+            download_info['transfer_left'] = "-"
+            download_info['transferred_bytes'] = "-"
+            download_info['file_size'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.file_size)
+            
+            
+            # TODO : speeds
+            download_info['current_speed'] = ""
+            download_info['average_speed'] = ""
+            download_info['ETA'] = ""
+        
+            if download.file_downloading:
+            
+                download_info['transfer_left'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.file_size - download.transferred_bytes)
+                download_info['transferred_bytes'] = sickbeard.seedboxDownloadHelpers.print_bytes(download.transferred_bytes)
+                download_info['percent_complete'] = 100 * download.transferred_bytes / download.file_size
+                download_info['status'] = "Downloading"
+                
+            elif download.file_already_present:
+                
+                download_info['percent_complete'] = 100
+                download_info['status'] = "Already there"
+                
+            elif download.file_downloaded:
+                
+                download_info['percent_complete'] = 100
+                download_info['status'] = "Downloaded"
+            else:
+                
+                download_info['percent_complete'] = 0
+                download_info['status'] = "Queued"
+            
+            HTML_output = HTML_output + "<tr>"
+            HTML_output = HTML_output + u"<td>%s</td>" % download_info['name'] 
+            HTML_output = HTML_output + u"<td>%s</td>" % download_info['status'] 
+            HTML_output = HTML_output + u"<td>%d %%</td>" % download_info['percent_complete'] 
+            HTML_output = HTML_output + u"<td>%s</td>" % download_info['file_size'] 
+            HTML_output = HTML_output + u"<td>%s</td>" % download_info['transferred_bytes'] 
+            HTML_output = HTML_output + u"<td>%d</td>" % download_info['attempts'] 
+            HTML_output = HTML_output + u"<td>%s</td>" % download_info['last_attempt_result'] 
+            HTML_output = HTML_output + "</tr>"
+            
+            pass
+        
+        HTML_output = HTML_output + "</table></div>"
+        
         return HTML_output
 
     @cherrypy.expose
