@@ -622,20 +622,8 @@ class Manage:
         
         HTML_output = HTML_output + "<br><br><br><br>"
         
-        HTML_output = HTML_output + """
-            <div class="download_table">
-            <table>
-                <tr>
-                <td>Name</td>
-                <td>Status</td>
-                <td>Percent</td>
-                <td>Size</td>
-                <td>Downloaded</td>
-                <td>Attempts</td>
-                <td>Last Attempt</td>
-                </tr>
-        """
-        
+        # We build the array that contains all downloads
+        download_infos = []
         for download in seedbox_downloader.downloads:
             
             download_info = {}
@@ -674,20 +662,105 @@ class Manage:
                 
                 download_info['percent_complete'] = 0
                 download_info['status'] = "Queued"
+                
+            download_infos.extend([download_info])
             
-            HTML_output = HTML_output + "<tr>"
-            HTML_output = HTML_output + u"<td>%s</td>" % download_info['name'] 
-            HTML_output = HTML_output + u"<td>%s</td>" % download_info['status'] 
-            HTML_output = HTML_output + u"<td>%d %%</td>" % download_info['percent_complete'] 
-            HTML_output = HTML_output + u"<td>%s</td>" % download_info['file_size'] 
-            HTML_output = HTML_output + u"<td>%s</td>" % download_info['transferred_bytes'] 
-            HTML_output = HTML_output + u"<td>%d</td>" % download_info['attempts'] 
-            HTML_output = HTML_output + u"<td>%s</td>" % download_info['last_attempt_result'] 
-            HTML_output = HTML_output + "</tr>"
+            pass
+        
+        
+        # Now we iterate this array to build each table.
+        HTML_output = HTML_output + """
+            <div class="download_table">
+            <table>
+                <tr>
+                <td>Name</td>
+                <td>Status</td>
+                <td>Percent</td>
+                <td>Size</td>
+                <td>Downloaded</td>
+                <td>Attempts</td>
+                <td>Last Attempt</td>
+                </tr>
+        """
+        
+        for download_info in download_infos:
+            
+            if download_info['status'] == "Downloading":
+                HTML_output = HTML_output + "<tr>"
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['name'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['status'] 
+                HTML_output = HTML_output + u"<td>%d %%</td>" % download_info['percent_complete'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['file_size'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['transferred_bytes'] 
+                HTML_output = HTML_output + u"<td>%d</td>" % download_info['attempts'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['last_attempt_result'] 
+                HTML_output = HTML_output + "</tr>"
             
             pass
         
         HTML_output = HTML_output + "</table></div>"
+        
+        
+        HTML_output = HTML_output + "<br><br><br><br>"
+        
+        # Now we iterate this array to build each table.
+        HTML_output = HTML_output + """
+            <div class="download_table">
+            <table>
+                <tr>
+                <td>Name</td>
+                <td>Status</td>
+                <td>Size</td>
+                <td>Attempts</td>
+                <td>Last Attempt</td>
+                </tr>
+        """
+        
+        for download_info in download_infos:
+            
+            if download_info['status'] <> "Downloading" and download_info['status'] <> "Downloaded":
+                HTML_output = HTML_output + "<tr>"
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['name'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['status'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['file_size']
+                HTML_output = HTML_output + u"<td>%d</td>" % download_info['attempts'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['last_attempt_result'] 
+                HTML_output = HTML_output + "</tr>"
+            
+            pass
+        
+        HTML_output = HTML_output + "</table></div>"
+        
+        
+        HTML_output = HTML_output + "<br><br><br><br>"
+        
+        
+        # Now we iterate this array to build each table.
+        HTML_output = HTML_output + """
+            <div class="download_table">
+            <table>
+                <tr>
+                <td>Name</td>
+                <td>Status</td>
+                <td>Size</td>
+                </tr>
+        """
+        
+        for download_info in download_infos:
+            
+            if download_info['status'] == "Downloaded":
+                HTML_output = HTML_output + "<tr>"
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['name'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['status'] 
+                HTML_output = HTML_output + u"<td>%s</td>" % download_info['file_size'] 
+                HTML_output = HTML_output + "</tr>"
+            
+            pass
+        
+        HTML_output = HTML_output + "</table></div>"
+        
+        
+        HTML_output = HTML_output + "<br><br><br><br>"
         
         return HTML_output
 
