@@ -42,6 +42,9 @@ class T411Provider(generic.TorrentProvider):
         
         self.login_done = False
         
+        self.failed_login_logged = False
+        self.successful_login_logged = False
+        
     def isEnabled(self):
         return sickbeard.T411
     
@@ -106,42 +109,70 @@ class T411Provider(generic.TorrentProvider):
         return item.getQuality()
     
     def _doLogin(self, login, password):
+       
+        data = urllib.urlencode({'login': login, 'password' : password, 'remember': 1, 'url' : '/'})
+        
+        req = urllib2.Request(self.url + '/users/auth/', data, {'X-Requested-With' : 'XMLHttpRequest'} )
+        
+        
+        r = self.opener.open(req)
+        
+        for index, cookie in enumerate(self.cj):
+            if (cookie.name == "authKey" and cookie.value != "null" ): self.login_done = True
+                                
+        if not self.login_done and not self.failed_login_logged:
+            logger.log(u"Unable to login to T411. Please check username and password.", logger.WARNING) 
+            self.failed_login_logged = True
+        
+        if self.login_done and not self.successful_login_logged:
+            logger.log(u"Login to T411 successful", logger.MESSAGE) 
+            self.successful_login_logged = True
 
-        data = urllib.urlencode({'login': login, 'password' : password, 'submit' : 'Connexion', 'remember': 1, 'url' : '/'})
-        self.opener.open(self.url + '/users/login', data)
+
     
     def _doSearch(self, searchString, show=None, season=None, french=None):
         
         if not self.login_done:
             self._doLogin( sickbeard.T411_USERNAME, sickbeard.T411_PASSWORD )
-
-        results = []
-        searchUrl = self.url + '/torrents/search/?' + searchString.replace('!','')
-        logger.log(u"Search string: " + searchUrl, logger.DEBUG)
         
-        r = self.opener.open( searchUrl )
-        soup = BeautifulSoup( r, "html.parser" )
-        resultsTable = soup.find("table", { "class" : "results" })
-        if resultsTable:
-            rows = resultsTable.find("tbody").findAll("tr")
-    
-            for row in rows:
-                link = row.find("a", title=True)
-                title = link['title']
-                id = row.find_all('td')[2].find_all('a')[0]['href'][1:].replace('torrents/nfo/?id=','')
-                downloadURL = ('http://www.t411.me/torrents/download/?id=%s' % id)
-                
-                quality = Quality.nameQuality( title )
-                if quality==Quality.UNKNOWN and title:
-                    if '720p' not in title.lower() and '1080p' not in title.lower():
-                        quality=Quality.SDTV
-                if show and french==None:
-                    results.append( T411SearchResult( self.opener, link['title'], downloadURL, quality, str(show.audio_lang) ) )
-                elif show and french:
-                    results.append( T411SearchResult( self.opener, link['title'], downloadURL, quality, 'fr' ) )
-                else:
-                    results.append( T411SearchResult( self.opener, link['title'], downloadURL, quality ) )
-                
+        
+        results = []
+        
+        if self.login_done:
+            
+            searchUrl = self.url + '/torrents/search/?' + searchString.replace('!','')
+            logger.log(u"Search string: " + searchUrl, logger.DEBUG)
+            
+            r = self.opener.open( searchUrl )
+            soup = BeautifulSoup( r, "html.parser" )
+            resultsTable = soup.find("table", { "class" : "results" })
+            if resultsTable:
+                rows = resultsTable.find("tbody").findAll("tr")
+        
+                for row in rows:
+                    link = row.find("a", title=True)
+                    # For now, the title does not contain the full name anymore. Maybe a bug from T411
+                    #title = link['title']
+                    # Fortunately, we can still get it from the href. This is not really safe though as the href naming could very well change
+                    # so it's best to check when the title gets back.
+                    title = link['href'].replace('//www.t411.me/torrents/', '')
+                    
+                    
+                    id = row.find_all('td')[2].find_all('a')[0]['href'][1:].replace('torrents/nfo/?id=','')
+                    downloadURL = ('http://www.t411.me/torrents/download/?id=%s' % id)
+                    
+                    logger.log(u"Search : HREF is %s,  Title is %s, download URL is %s" % (link['href'], title, downloadURL), logger.DEBUG) 
+                    quality = Quality.nameQuality( title )
+                    if quality==Quality.UNKNOWN and title:
+                        if '720p' not in title.lower() and '1080p' not in title.lower():
+                            quality=Quality.SDTV
+                    if show and french==None:
+                        results.append( T411SearchResult( self.opener, title, downloadURL, quality, str(show.audio_lang) ) )
+                    elif show and french:
+                        results.append( T411SearchResult( self.opener, title, downloadURL, quality, 'fr' ) )
+                    else:
+                        results.append( T411SearchResult( self.opener, title, downloadURL, quality ) )
+                    
         return results
     
     def getResult(self, episodes):
