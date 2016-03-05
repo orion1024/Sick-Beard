@@ -156,11 +156,11 @@ class T411Provider(generic.TorrentProvider):
                     #title = link['title']
                     # Fortunately, we can still get it from the href. This is not really safe though as the href naming could very well change
                     # so it's best to check when the title gets back.
-                    title = link['href'].replace('//www.t411.io/torrents/', '')
+                    title = link['href'].replace('//www.t411.ch/torrents/', '')
                     
                     
                     id = row.find_all('td')[2].find_all('a')[0]['href'][1:].replace('torrents/nfo/?id=','')
-                    downloadURL = ('http://www.t411.io/torrents/download/?id=%s' % id)
+                    downloadURL = ('http://www.t411.ch/torrents/download/?id=%s' % id)
                     
                     logger.log(u"Search : HREF is %s,  Title is %s, download URL is %s" % (link['href'], title, downloadURL), logger.DEBUG) 
                     quality = Quality.nameQuality( title )
