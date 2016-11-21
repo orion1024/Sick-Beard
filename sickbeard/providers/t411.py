@@ -39,7 +39,7 @@ class T411Provider(generic.TorrentProvider):
         self.cj = cookielib.CookieJar()
         self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
         
-        self.url = "http://www.t411.ch"
+        self.url = "http://www.t411.li"
         
         self.login_done = False
         
